@@ -170,10 +170,28 @@ export function useVoiceDemo({ apiEndpoint, scripts }: UseVoiceDemoOptions): Use
     });
 
     if (!response.ok) {
-      throw new Error(`Erreur API: ${response.statusText}`);
+      const errorText = await response.text();
+      let errorMessage = `Erreur API (${response.status}): ${response.statusText}`;
+      
+      try {
+        const errorJson = JSON.parse(errorText);
+        errorMessage = errorJson.error || errorJson.details || errorMessage;
+      } catch {
+        if (errorText) {
+          errorMessage += ` - ${errorText}`;
+        }
+      }
+      
+      throw new Error(errorMessage);
     }
 
     const blob = await response.blob();
+    
+    // Vérifier que c'est bien un fichier audio
+    if (!blob.type.startsWith('audio/')) {
+      throw new Error('Réponse serveur invalide : format audio attendu');
+    }
+    
     const url = URL.createObjectURL(blob);
     audioCache.set(cacheKey, url);
     return url;
@@ -207,7 +225,21 @@ export function useVoiceDemo({ apiEndpoint, scripts }: UseVoiceDemoOptions): Use
       setState('playing');
     } catch (err) {
       console.error('Error playing audio:', err);
-      setError(err instanceof Error ? err.message : 'Erreur de lecture');
+      let errorMessage = 'Erreur de lecture';
+      
+      if (err instanceof Error) {
+        errorMessage = err.message;
+        // Messages d'erreur plus clairs
+        if (err.message.includes('Failed to fetch') || err.message.includes('NetworkError')) {
+          errorMessage = 'Impossible de contacter le serveur. Vérifiez votre connexion ou que le service Render est actif.';
+        } else if (err.message.includes('404')) {
+          errorMessage = 'Endpoint non trouvé. Vérifiez l\'URL du serveur.';
+        } else if (err.message.includes('500')) {
+          errorMessage = 'Erreur serveur. Le service TTS peut être temporairement indisponible.';
+        }
+      }
+      
+      setError(errorMessage);
       setState('error');
     }
   }, [fetchAudio, setupAudioAnalyser]);

@@ -194,9 +194,14 @@ export function VoiceDemo({ open, onOpenChange }: VoiceDemoProps) {
             {/* Status Display */}
             <div className="h-6 flex items-center justify-center">
               {error && state === 'error' ? (
-                <div className="flex items-center gap-2 text-[#d4183d] text-sm font-montserrat">
-                  <AlertCircle className="w-4 h-4" />
-                  <span>{error}</span>
+                <div className="flex flex-col items-center gap-1 text-[#d4183d] text-sm font-montserrat max-w-md text-center">
+                  <div className="flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4" />
+                    <span>{error}</span>
+                  </div>
+                  <p className="text-xs text-[#6B6B6B] mt-1">
+                    Endpoint: {VOICE_DEMO_CONFIG.apiEndpoint}
+                  </p>
                 </div>
               ) : (
                 <p className="text-xs text-[#6B6B6B] font-montserrat">
