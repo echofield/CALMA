@@ -118,7 +118,7 @@ export function VoiceDemo({ open, onOpenChange }: VoiceDemoProps) {
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent 
-          className="sm:max-w-2xl border border-[#E0E0E0] shadow-xl"
+          className="sm:max-w-2xl !bg-white border border-[#E0E0E0] shadow-xl"
           style={{ backgroundColor: '#FFFFFF' }}
         >
           <DialogHeader>
