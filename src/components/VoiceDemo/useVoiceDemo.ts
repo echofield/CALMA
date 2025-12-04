@@ -1,0 +1,261 @@
+import { useState, useRef, useCallback, useEffect } from 'react';
+
+export type VoiceDemoState = 'idle' | 'loading' | 'playing' | 'error';
+
+interface UseVoiceDemoOptions {
+  apiEndpoint: string;
+  scripts: Record<string, string>;
+}
+
+interface UseVoiceDemoReturn {
+  state: VoiceDemoState;
+  selectedVoice: string;
+  error: string | null;
+  audioContext: AudioContext | null;
+  analyser: AnalyserNode | null;
+  dataArray: Uint8Array | null;
+  selectVoice: (voiceId: string) => void;
+  playAudio: (voiceId: string) => Promise<void>;
+  stopAudio: () => void;
+  canvasRef: React.RefObject<HTMLCanvasElement>;
+  audioRef: React.RefObject<HTMLAudioElement>;
+}
+
+const audioCache = new Map<string, string>();
+
+export function useVoiceDemo({ apiEndpoint, scripts }: UseVoiceDemoOptions): UseVoiceDemoReturn {
+  const [state, setState] = useState<VoiceDemoState>('idle');
+  const [selectedVoice, setSelectedVoice] = useState<string>('simon');
+  const [error, setError] = useState<string | null>(null);
+  const [audioContext, setAudioContext] = useState<AudioContext | null>(null);
+  const [analyser, setAnalyser] = useState<AnalyserNode | null>(null);
+  const [dataArray, setDataArray] = useState<Uint8Array | null>(null);
+
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const animationFrameIdRef = useRef<number | null>(null);
+  const sourceNodeRef = useRef<MediaElementAudioSourceNode | null>(null);
+
+  // Setup Web Audio API
+  const setupAudioAnalyser = useCallback(async () => {
+    if (!audioRef.current) return;
+
+    try {
+      // Create or resume AudioContext
+      let ctx = audioContext;
+      if (!ctx) {
+        ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+        setAudioContext(ctx);
+      }
+
+      if (ctx.state === 'suspended') {
+        await ctx.resume();
+      }
+
+      // Create analyser if not exists
+      if (!analyser) {
+        const analyserNode = ctx.createAnalyser();
+        analyserNode.fftSize = 256;
+        setAnalyser(analyserNode);
+        setDataArray(new Uint8Array(analyserNode.frequencyBinCount));
+      }
+
+      // Connect audio element to analyser
+      if (!sourceNodeRef.current && audioRef.current) {
+        const source = ctx.createMediaElementSource(audioRef.current);
+        sourceNodeRef.current = source;
+        source.connect(analyser!);
+        analyser!.connect(ctx.destination);
+      }
+    } catch (err) {
+      console.error('Error setting up audio analyser:', err);
+      setError('Erreur de configuration audio');
+      setState('error');
+    }
+  }, [audioContext, analyser]);
+
+  // Draw audio visualization
+  const drawVisualization = useCallback(() => {
+    if (!canvasRef.current || !analyser || !dataArray || state !== 'playing') {
+      if (animationFrameIdRef.current) {
+        cancelAnimationFrame(animationFrameIdRef.current);
+        animationFrameIdRef.current = null;
+      }
+      return;
+    }
+
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    analyser.getByteFrequencyData(dataArray);
+
+    // Get CSS dimensions (context is already scaled by devicePixelRatio)
+    const rect = canvas.getBoundingClientRect();
+    const WIDTH = rect.width;
+    const HEIGHT = rect.height;
+
+    // Clear canvas using actual pixel dimensions
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    const barWidth = (WIDTH / (dataArray.length / 2)) * 1.5;
+    let x = 0;
+
+    for (let i = 0; i < dataArray.length / 2; i++) {
+      const barHeight = (dataArray[i] / 255) * HEIGHT * 0.8; // Scale to 80% of height
+      const opacity = Math.min(barHeight / (HEIGHT * 0.4), 1);
+      
+      ctx.fillStyle = `rgba(191, 169, 122, ${opacity})`;
+      // Use CSS dimensions since context is already scaled
+      ctx.fillRect(x, HEIGHT / 2 - barHeight / 2, barWidth, barHeight);
+      x += barWidth + 1;
+    }
+
+    animationFrameIdRef.current = requestAnimationFrame(drawVisualization);
+  }, [analyser, dataArray, state]);
+
+  // Start visualization when playing
+  useEffect(() => {
+    if (state === 'playing' && analyser && dataArray) {
+      drawVisualization();
+    } else if (animationFrameIdRef.current) {
+      cancelAnimationFrame(animationFrameIdRef.current);
+      animationFrameIdRef.current = null;
+      
+      // Clear canvas and redraw baseline
+      if (canvasRef.current) {
+        const canvas = canvasRef.current;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          const rect = canvas.getBoundingClientRect();
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          // Draw baseline using CSS dimensions (context is already scaled)
+          ctx.beginPath();
+          ctx.moveTo(0, rect.height / 2);
+          ctx.lineTo(rect.width, rect.height / 2);
+          ctx.strokeStyle = '#E0E0E0';
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+        }
+      }
+    }
+
+    return () => {
+      if (animationFrameIdRef.current) {
+        cancelAnimationFrame(animationFrameIdRef.current);
+      }
+    };
+  }, [state, analyser, dataArray, drawVisualization]);
+
+  // Fetch audio from API
+  const fetchAudio = useCallback(async (voiceId: string): Promise<string> => {
+    const text = scripts[voiceId];
+    if (!text) {
+      throw new Error(`Script non trouvé pour la voix ${voiceId}`);
+    }
+
+    // Check cache
+    const cacheKey = `${voiceId}-${text}`;
+    if (audioCache.has(cacheKey)) {
+      return audioCache.get(cacheKey)!;
+    }
+
+    // Fetch from API
+    const response = await fetch(apiEndpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ voice: voiceId, text }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Erreur API: ${response.statusText}`);
+    }
+
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    audioCache.set(cacheKey, url);
+    return url;
+  }, [apiEndpoint, scripts]);
+
+  // Play audio
+  const playAudio = useCallback(async (voiceId: string) => {
+    if (!audioRef.current) return;
+
+    try {
+      setState('loading');
+      setError(null);
+
+      // Setup audio analyser
+      await setupAudioAnalyser();
+
+      // Fetch audio
+      const audioUrl = await fetchAudio(voiceId);
+
+      // Set audio source and play
+      audioRef.current.src = audioUrl;
+      audioRef.current.onended = () => {
+        setState('idle');
+      };
+      audioRef.current.onerror = () => {
+        setError('Erreur de lecture audio');
+        setState('error');
+      };
+
+      await audioRef.current.play();
+      setState('playing');
+    } catch (err) {
+      console.error('Error playing audio:', err);
+      setError(err instanceof Error ? err.message : 'Erreur de lecture');
+      setState('error');
+    }
+  }, [fetchAudio, setupAudioAnalyser]);
+
+  // Stop audio
+  const stopAudio = useCallback(() => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
+    setState('idle');
+    setError(null);
+  }, []);
+
+  // Select voice
+  const selectVoice = useCallback((voiceId: string) => {
+    if (state === 'playing') return;
+    setSelectedVoice(voiceId);
+    setError(null);
+  }, [state]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (animationFrameIdRef.current) {
+        cancelAnimationFrame(animationFrameIdRef.current);
+      }
+      if (sourceNodeRef.current) {
+        sourceNodeRef.current.disconnect();
+      }
+      if (audioContext && audioContext.state !== 'closed') {
+        audioContext.close();
+      }
+    };
+  }, [audioContext]);
+
+  return {
+    state,
+    selectedVoice,
+    error,
+    audioContext,
+    analyser,
+    dataArray,
+    selectVoice,
+    playAudio,
+    stopAudio,
+    canvasRef,
+    audioRef,
+  };
+}
+

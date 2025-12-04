@@ -1,0 +1,1159 @@
+<!DOCTYPE html>
+<html lang="fr" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SYMI - Votre réceptionniste intelligent ne dort jamais</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect rx='12' width='64' height='64' fill='%23A890FE'/%3E%3Ctext x='32' y='40' text-anchor='middle' font-family='Arial' font-size='28' fill='white'%3ES%3C/text%3E%3C/svg%3E">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <style>
+        /*
+         * DESIGN SYSTEM: Refined Light Theme
+         */
+        :root {
+            --background: #F9F9FD;
+            --foreground: #1A1A3A; /* Dark blue/purple for headings */
+            --text: #4A4A6A;       /* Softer blue/purple for body text */
+            --muted: rgba(74, 74, 106, 0.7); /* Muted text */
+            --accent: #A890FE;      /* Main accent color */
+            --accent-soft: rgba(230, 220, 255, 0.8); /* For background glow */
+            --border: rgba(74, 74, 106, 0.15); /* Softer, colored border */
+            --card-bg: #FFFFFF;     
+        }
+
+        body {
+            background-color: var(--background);
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .font-mono {
+            font-family: 'IBM Plex Mono', monospace;
+        }
+
+        /* --- Animated Background --- */
+        .breathing-bg {
+            position: fixed;
+            inset: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at center, var(--accent-soft) 0%, transparent 35%);
+            animation: breathe 15s ease-in-out infinite;
+            pointer-events: none;
+            transition: background 0.6s ease;
+            z-index: -1;
+        }
+
+        @keyframes breathe {
+            0%, 100% { transform: scale(0.9); opacity: 0.7; }
+            50% { transform: scale(1.1); opacity: 1; }
+        }
+
+        /* --- Typography --- */
+        h1, h2, h3, h4 {
+            font-weight: 600;
+            letter-spacing: -0.025em;
+            color: var(--foreground);
+        }
+
+        .symbolic-title {
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text);
+            font-size: 0.8rem;
+        }
+        
+        /* --- Buttons --- */
+        .btn {
+            display: inline-block;
+            border: 1px solid var(--border);
+            padding: 12px 28px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            border-radius: 999px;
+            color: var(--text);
+            background-color: var(--card-bg);
+            transition: all 0.3s ease;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            border-color: var(--muted);
+            color: var(--foreground);
+        }
+        
+        .btn-primary {
+           background: var(--accent);
+           border-color: var(--accent);
+           color: #FFFFFF;
+           font-weight: 600;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--foreground);
+            border-color: var(--foreground);
+        }
+
+        .btn.active {
+            border-color: var(--accent);
+            color: var(--accent);
+            box-shadow: 0 0 10px var(--accent-soft);
+        }
+
+        /* --- Cards & Geometric UI --- */
+        .geometric-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: var(--foreground);
+            box-shadow: 0 4px 15px rgba(74, 74, 106, 0.05);
+        }
+        .geometric-card:hover {
+            border-color: rgba(74, 74, 106, 0.25);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(74, 74, 106, 0.08);
+        }
+
+        /* --- Sticky Header --- */
+        .sticky-header {
+            transform: translateY(0);
+            transition: all 0.4s ease;
+        }
+        .sticky-header.scrolled {
+            transform: translateY(0);
+            background-color: rgba(249, 249, 253, 0.8);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+        }
+
+        /* --- Scroll Animation --- */
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+        }
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        /* --- Pricing Table --- */
+        .pricing-tier {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 32px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        .pricing-tier.featured-tier {
+            border-color: var(--accent);
+            box-shadow: 0 0 20px rgba(168, 144, 254, 0.3);
+            transform: scale(1.03);
+        }
+        .pricing-tier h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--foreground);
+        }
+        .pricing-tier .price {
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--foreground);
+            line-height: 1;
+        }
+        .pricing-tier .price-unit {
+            font-size: 1rem;
+            color: var(--muted);
+            margin-bottom: 1.5rem;
+        }
+        .pricing-tier ul {
+            list-style: none;
+            padding: 0;
+            margin-top: 2.5rem;
+            flex-grow: 1;
+            width: 100%;
+        }
+        .pricing-tier ul li {
+            font-size: 0.95rem;
+            color: var(--text);
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            text-align: left;
+        }
+        .pricing-tier ul li svg {
+            fill: var(--accent);
+            margin-right: 8px;
+            flex-shrink: 0;
+        }
+        .pricing-tier .btn {
+            width: 100%;
+            margin-top: auto;
+            padding-top: 12px;
+            padding-bottom: 12px;
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
+        }
+        .pricing-tier .btn:hover {
+            /* keep colors unchanged, just subtle movement */
+            transform: translateY(-2px);
+            box-shadow: 0 8px 18px rgba(0,0,0,0.08);
+        }
+        /* Ensure no color change on hover for pricing CTAs */
+        .pricing-tier .btn-primary:hover {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #FFFFFF;
+        }
+        .pricing-tier .btn:not(.btn-primary):hover {
+            background: var(--card-bg);
+            border-color: var(--border);
+            color: var(--text);
+        }
+        
+        /* --- Demo UI --- */
+        .voice-btn {
+            padding: 0.5rem 1.5rem;
+            border-radius: 999px;
+            border: none;
+            background-color: transparent;
+            color: var(--muted);
+            font-weight: 500;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            flex-grow: 1;
+        }
+        .voice-btn.active {
+            background-color: var(--accent);
+            color: white;
+            box-shadow: 0 2px 10px rgba(168, 144, 254, 0.4);
+        }
+        
+        #voice-wave {
+            transition: opacity 0.3s ease;
+        }
+
+        /* --- Phone CTA Button (scoped) --- */
+        .phone-btn {
+            display: inline-block;
+            padding: 17px 40px;
+            border-radius: 50px;
+            cursor: pointer;
+            border: 1px solid var(--border);
+            background-color: var(--card-bg);
+            box-shadow: 0 0 8px rgba(0, 0, 0, 0.05);
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--foreground);
+            transition: all 0.5s ease;
+            text-decoration: none;
+        }
+        .phone-btn:hover {
+            box-shadow: 0 7px 29px rgba(0, 0, 0, 0.12);
+        }
+        .phone-btn:active {
+            box-shadow: 0 0 0 rgba(0, 0, 0, 0);
+            transform: translateY(10px);
+            transition: 100ms;
+        }
+
+        /* --- Phone Header + Icon Button --- */
+        .logo-word {
+            letter-spacing: -0.02em;
+            font-weight: 700;
+            color: var(--foreground);
+        }
+        .call-icon-btn {
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            width: 56px;
+            height: 56px;
+            border-radius: 9999px;
+            border: none;
+            background: var(--accent);
+            color: #FFFFFF;
+            box-shadow: 0 6px 20px rgba(168, 144, 254, 0.35);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .call-icon-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 24px rgba(168, 144, 254, 0.45);
+        }
+        .call-icon-btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 8px rgba(168, 144, 254, 0.25);
+        }
+
+        /* --- Integrations & Footer --- */
+        .integrations-row svg {
+            color: var(--accent);
+        }
+        .pulse-dot {
+            position: relative;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--accent);
+            box-shadow: 0 0 0 rgba(168,144,254,0.7);
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(168,144,254,0.5); }
+            70% { box-shadow: 0 0 0 8px rgba(168,144,254,0); }
+            100% { box-shadow: 0 0 0 0 rgba(168,144,254,0); }
+        }
+
+        /* --- Animated logo square --- */
+        .logo-square-anim { transform-box: fill-box; transform-origin: center; }
+
+
+    </style>
+</head>
+
+<body id="top" class="overflow-x-hidden">
+
+    <div class="breathing-bg"></div>
+
+    <header id="sticky-header" class="sticky-header fixed top-0 left-0 right-0 z-50 p-4">
+        <div class="container mx-auto flex justify-between items-center">
+            <a href="#" class="flex items-center space-x-2 -ml-2">
+                <span class="sr-only">SYMI</span>
+                <svg width="112" height="32" viewBox="0 0 188 54" fill="none" xmlns="http://www.w3.org/2000/svg" class="h-8 w-auto">
+                    <g filter="url(#filter0_ddiii_7320_18362)">
+                    <g clip-path="url(#clip0_7320_18362)">
+                    <rect x="3" width="48" height="48" rx="12" fill="#A890FE" class="logo-square-anim"/>
+                    <rect width="48" height="48" transform="translate(3)" fill="url(#paint0_linear_7320_18362)"/>
+                    <g filter="url(#filter1_d_7320_18362)">
+                    <path fill-rule="evenodd" clip-rule="evenodd" d="M21.131 27.5399L24.5576 30.9665C26.6428 33.0518 30.0237 33.0518 32.109 30.9665C32.7967 30.2788 33.2576 29.4502 33.4917 28.5736L35.8847 30.9665C37.9699 33.0518 41.3508 33.0518 43.4361 30.9665C45.5213 28.8813 45.5213 25.5004 43.4361 23.4151L35.8847 15.8637C33.7994 13.7785 30.4185 13.7785 28.3333 15.8637C27.6456 16.5515 27.1846 17.3801 26.9505 18.2567L24.5576 15.8637C22.4723 13.7785 19.0914 13.7785 17.0062 15.8638L10.792 22.0779C8.40266 24.4673 8.40266 28.3412 10.792 30.7306C13.1814 33.1199 17.0553 33.1199 19.4447 30.7306C20.3492 29.8261 20.9113 28.7088 21.131 27.5399ZM22.6697 17.7516C21.6271 16.709 19.9367 16.709 18.894 17.7516C17.8519 18.7938 17.8514 20.4832 18.8927 21.526L26.4454 29.0787C27.4881 30.1213 29.1785 30.1213 30.2211 29.0787C31.2632 28.0366 31.2638 26.3474 30.2228 25.3047L22.6697 17.7516ZM17.5568 23.9658L15.1183 21.5273L12.6799 23.9658C11.3331 25.3125 11.3331 27.496 12.6799 28.8427C14.0266 30.1894 16.2101 30.1894 17.5568 28.8427C18.9035 27.496 18.9035 25.3125 17.5568 23.9658ZM30.2189 21.5251C29.1785 20.4823 29.1792 18.7935 30.2211 17.7516C31.2637 16.709 32.9542 16.709 33.9968 17.7516L41.5482 25.303C42.5908 26.3456 42.5908 28.0361 41.5482 29.0787C40.5056 30.1213 38.8151 30.1213 37.7725 29.0787L30.2189 21.5251Z" fill="url(#paint1_linear_7320_18362)"/>
+                    </g>
+                    </g>
+                    <rect x="4" y="1" width="46" height="46" rx="11" stroke="url(#paint2_linear_7320_18362)" stroke-width="2"/>
+                    </g>
+                    <g style="color: var(--foreground)">
+                        <text x="62" y="34" font-family="Inter, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, 'Noto Sans', 'Apple Color Emoji', 'Segoe UI Emoji'" font-weight="700" font-size="24" fill="currentColor">Symi</text>
+                        <!-- Subtle SM monogram inside pictogram -->
+                        <text x="17" y="31" font-family="Inter, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial" font-weight="700" font-size="14" fill="#FFFFFF" opacity="0.5">SM</text>
+                    </g>
+                    <defs>
+                    <filter id="filter0_ddiii_7320_18362" x="0" y="-3" width="54" height="57" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+                    <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+                    <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+                    <feOffset dy="1"/>
+                    <feGaussianBlur stdDeviation="0.5"/>
+                    <feComposite in2="hardAlpha" operator="out"/>
+                    <feColorMatrix type="matrix" values="0 0 0 0 0.162923 0 0 0 0 0.162923 0 0 0 0 0.162923 0 0 0 0.08 0"/>
+                    <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_7320_18362"/>
+                    <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+                    <feMorphology radius="1" operator="erode" in="SourceAlpha" result="effect2_dropShadow_7320_18362"/>
+                    <feOffset dy="3"/>
+                    <feGaussianBlur stdDeviation="2"/>
+                    <feComposite in2="hardAlpha" operator="out"/>
+                    <feColorMatrix type="matrix" values="0 0 0 0 0.164706 0 0 0 0 0.164706 0 0 0 0 0.164706 0 0 0 0.14 0"/>
+                    <feBlend mode="normal" in2="effect1_dropShadow_7320_18362" result="effect2_dropShadow_7320_18362"/>
+                    <feBlend mode="normal" in="SourceGraphic" in2="effect2_dropShadow_7320_18362" result="shape"/>
+                    <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+                    <feOffset dy="-3"/>
+                    <feGaussianBlur stdDeviation="1.5"/>
+                    <feComposite in2="hardAlpha" operator="arithmetic" k2="-1" k3="1"/>
+                    <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.1 0"/>
+                    <feBlend mode="normal" in2="shape" result="effect3_innerShadow_7320_18362"/>
+                    <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+                    <feOffset dy="3"/>
+                    <feGaussianBlur stdDeviation="1.5"/>
+                    <feComposite in2="hardAlpha" operator="arithmetic" k2="-1" k3="1"/>
+                    <feColorMatrix type="matrix" values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.1 0"/>
+                    <feBlend mode="normal" in2="effect3_innerShadow_7320_18362" result="effect4_innerShadow_7320_18362"/>
+                    <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+                    <feMorphology radius="1" operator="erode" in="SourceAlpha" result="effect5_innerShadow_7320_18362"/>
+                    <feOffset/>
+                    <feComposite in2="hardAlpha" operator="arithmetic" k2="-1" k3="1"/>
+                    <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.2 0"/>
+                    <feBlend mode="normal" in2="effect4_innerShadow_7320_18362" result="effect5_innerShadow_7320_18362"/>
+                    </filter>
+                    <filter id="filter1_d_7320_18362" x="6" y="5.25" width="42" height="42" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+                    <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+                    <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+                    <feMorphology radius="1.5" operator="erode" in="SourceAlpha" result="effect1_dropShadow_7320_18362"/>
+                    <feOffset dy="2.25"/>
+                    <feGaussianBlur stdDeviation="2.25"/>
+                    <feComposite in2="hardAlpha" operator="out"/>
+                    <feColorMatrix type="matrix" values="0 0 0 0 0.141176 0 0 0 0 0.141176 0 0 0 0 0.141176 0 0 0 0.1 0"/>
+                    <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_7320_18362"/>
+                    <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_7320_18362" result="shape"/>
+                    </filter>
+                    <linearGradient id="paint0_linear_7320_18362" x1="24" y1="5.96047e-07" x2="26" y2="48" gradientUnits="userSpaceOnUse">
+                    <stop stop-color="white" stop-opacity="0"/>
+                    <stop offset="1" stop-color="white" stop-opacity="0.12"/>
+                    </linearGradient>
+                    <linearGradient id="paint1_linear_7320_18362" x1="27" y1="14.2998" x2="27" y2="32.5305" gradientUnits="userSpaceOnUse">
+                    <stop stop-color="white" stop-opacity="0.8"/>
+                    <stop offset="1" stop-color="white" stop-opacity="0.5"/>
+                    </linearGradient>
+                    <linearGradient id="paint2_linear_7320_18362" x1="27" y1="0" x2="27" y2="48" gradientUnits="userSpaceOnUse">
+                    <stop stop-color="white" stop-opacity="0.12"/>
+                    <stop offset="1" stop-color="white" stop-opacity="0"/>
+                    </linearGradient>
+                    <clipPath id="clip0_7320_18362">
+                    <rect x="3" width="48" height="48" rx="12" fill="white"/>
+                    </clipPath>
+                </svg>
+            </a>
+            <nav class="hidden md:flex items-center space-x-8 text-sm">
+                <a href="#solution" class="text-muted hover:text-foreground transition-colors">Solution</a>
+                <a href="#secteurs" class="text-muted hover:text-foreground transition-colors">Secteurs</a>
+                <a href="#mise-en-service" class="text-muted hover:text-foreground transition-colors">Mise en service</a>
+                <a href="#tarifs" class="text-muted hover:text-foreground transition-colors">Tarifs</a>
+                <button id="open-contact" class="text-muted hover:text-foreground transition-colors">Contact</button>
+                <a href="#contact" class="btn btn-primary text-xs py-2 px-4">Démarrer</a>
+            </nav>
+            <div class="md:hidden">
+                <button id="mobile-menu-button" aria-label="Ouvrir le menu principal" class="text-foreground focus:outline-none">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+                </button>
+            </div>
+        </div>
+        <div id="mobile-menu" class="hidden md:hidden fixed inset-0 bg-background bg-opacity-95 z-40 flex flex-col items-center justify-center space-y-8 text-lg">
+            <button id="close-mobile-menu" aria-label="Fermer le menu principal" class="absolute top-6 right-6 text-foreground focus:outline-none">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+            <a href="#solution" class="text-foreground hover:text-accent transition-colors menu-link">Solution</a>
+            <a href="#secteurs" class="text-foreground hover:text-accent transition-colors menu-link">Secteurs</a>
+            <a href="#mise-en-service" class="text-foreground hover:text-accent transition-colors menu-link">Mise en service</a>
+            <a href="#tarifs" class="text-foreground hover:text-accent transition-colors menu-link">Tarifs</a>
+            <button id="open-contact-mobile" class="text-foreground hover:text-accent transition-colors">Contact</button>
+            <a href="#contact" class="btn btn-primary text-sm py-3 px-6 menu-link">Démarrer</a>
+        </div>
+    </header>
+
+    <!-- Modal: Offre entreprise / Contact -->
+    <div id="symi-modal" class="hidden fixed inset-0 z-50 items-center justify-center">
+        <div class="absolute inset-0 bg-black/40"></div>
+        <div class="relative max-w-3xl w-[92%] md:w-[720px] bg-white rounded-2xl border border-border shadow-xl overflow-hidden">
+            <div class="flex items-center justify-between p-4 border-b border-border">
+                <h3 id="symi-modal-title" class="text-lg font-semibold text-foreground">Contact SYMI</h3>
+                <button id="symi-modal-close" aria-label="Fermer" class="text-muted hover:text-foreground">
+                    <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <div id="symi-modal-body" class="p-0">
+                <!-- Adapted SVG content as visual header -->
+                <div class="w-full bg-gradient-to-b from-white to-[rgba(230,220,255,0.6)]">
+                    <div class="px-6 pt-8 pb-4">
+                        <p class="symbolic-title">PARLER À SYMI</p>
+                        <h4 class="text-2xl font-semibold mt-2 text-foreground">On s'occupe de vos appels, 24/7</h4>
+                        <p class="mt-2 text-sm text-muted">Essayez SYMI en conditions réelles ou demandez une offre entreprise adaptée à votre volume.</p>
+                        <div class="mt-6 flex flex-col sm:flex-row gap-3">
+                            <a href="mailto:contact@symi.io" class="btn btn-primary w-full sm:w-auto">Envoyer un email</a>
+                            <a href="tel:0756900776" class="btn w-full sm:w-auto">Appeler le 07 56 90 07 76</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="px-6 py-6">
+                    <ul class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <li class="geometric-card p-4"><span class="font-medium">Mise en service rapide</span><br/><span class="text-sm text-muted">48H à 5 jours selon complexité</span></li>
+                        <li class="geometric-card p-4"><span class="font-medium">Accueil premium</span><br/><span class="text-sm text-muted">Scripts alignés à votre marque</span></li>
+                        <li class="geometric-card p-4"><span class="font-medium">Transparence</span><br/><span class="text-sm text-muted">Suivi et rapports détaillés</span></li>
+                        <li class="geometric-card p-4"><span class="font-medium">Scalabilité</span><br/><span class="text-sm text-muted">De PME à multi-sites</span></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <main class="container mx-auto px-6">
+
+        <section class="min-h-screen flex items-center justify-center text-center">
+            <div class="max-w-4xl mx-auto reveal">
+                <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tighter">Symi Voice</h1>
+                <div class="mt-2 text-2xl md:text-3xl font-bold tracking-tight text-foreground">L'art de répondre, au bon moment.</div>
+                <p class="max-w-2xl mx-auto mt-6 text-lg md:text-xl leading-relaxed text-muted">
+                    SYMI redéfinit la gestion des rendez-vous. Pendant que vous vous concentrez sur ce que vous faites de mieux, votre assistant intelligent s'occupe du reste
+                </p>
+                
+                <!-- Interactive Demo Module -->
+                <div class="mt-12 max-w-lg mx-auto p-6 border border-border rounded-2xl">
+                    <p class="text-sm text-muted mb-3">Découvrez comment SYMI révolutionne votre accueil téléphonique</p>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="text-xs text-muted mb-1 block">Avec qui souhaitez-vous échanger&nbsp;?</label>
+                            <div id="voice-select-container" class="flex justify-center items-center border border-border rounded-full p-1 bg-gray-50">
+                                <button class="voice-btn" data-voice="simon">Simon</button>
+                                <button class="voice-btn" data-voice="lena">Léna</button>
+                            </div>
+                        </div>
+                        <div>
+                            <button id="demo-btn" class="btn w-full">
+                                <span id="demo-btn-text">Voix de démo</span>
+                            </button>
+                        </div>
+                        <div class="h-12 flex items-center justify-center">
+                            <canvas id="voice-wave" width="300" height="50"></canvas>
+                        </div>
+                        <div id="status-display" class="text-xs text-muted h-6 flex items-center justify-center">
+                            Prêt pour la démonstration
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Phone Block -->
+                <div class="mt-6 max-w-lg mx-auto relative rounded-[39px] text-center bg-white/30 backdrop-blur p-6">
+                    <!-- Gradient stroke card (responsive) -->
+                    <svg class="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 374 203" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                        <defs>
+                            <linearGradient id="phone_paint0" x1="-79" y1="-14.625" x2="-43.743" y2="235.446" gradientUnits="userSpaceOnUse">
+                                <stop stop-color="white"/>
+                                <stop offset="1" stop-color="white" stop-opacity="0.2"/>
+                            </linearGradient>
+                        </defs>
+                        <rect x="1" y="1" width="372" height="201" rx="39" fill="none" stroke="url(#phone_paint0)" stroke-width="2" vector-effect="non-scaling-stroke"/>
+                    </svg>
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-border bg-[rgba(230,220,255,0.5)] text-[color:var(--foreground)] text-xs font-semibold tracking-wide">
+                        <span class="inline-block w-2 h-2 rounded-full bg-[color:var(--accent)]"></span>
+                        24/7
+                    </div>
+                    <div class="mt-3 flex items-center justify-center gap-3">
+                        <button class="call-icon-btn" aria-label="Appeler">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6A19.79 19.79 0 012.09 4.18 2 2 0 014.06 2h3a2 2 0 012 1.72c.12.9.3 1.77.54 2.6a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.48-1.48a2 2 0 012.11-.45c.83.24 1.7.42 2.6.54A2 2 0 0122 16.92z" fill="currentColor"/>
+                            </svg>
+                        </button>
+                        <h3 class="text-2xl md:text-3xl font-semibold tracking-tight logo-word">Symi</h3>
+                    </div>
+                    <a href="tel:0756900776" class="phone-btn mt-4" aria-label="Appeler SYMI au 07 56 90 07 76">07 56 90 07 76</a>
+                    <p class="text-xs text-muted mt-3">Appel gratuit – démo 60 s</p>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- The rest of the page content remains the same -->
+        <section id="probleme" class="py-24 md:py-32">
+            <div class="max-w-4xl mx-auto text-center reveal">
+                <p class="symbolic-title">LE DÉFI QUE VOUS CONNAISSEZ</p>
+                <h2 class="text-3xl md:text-4xl mt-4">Il existe une meilleure façon de faire</h2>
+                <p class="max-w-3xl mx-auto mt-6 text-lg md:text-xl leading-relaxed text-muted">
+                    Les appels non-décrochés se transforment en opportunités perdues. Les désistements de dernière minute créent des trous dans votre planning. Votre équipe passe plus de temps à gérer les rendez-vous qu'à servir vos clients.
+                </p>
+            </div>
+        </section>
+        
+        <!-- Integrations line -->
+        <section class="py-10">
+            <div class="max-w-4xl mx-auto px-6 text-center integrations-row reveal">
+                <div class="inline-flex items-center gap-4 px-4 py-3 border border-border rounded-full bg-card-bg">
+                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M8 17l4 4 4-4M8 7l4-4 4 4"/></svg>
+                    <span class="text-sm text-muted">Compatible Google Calendar, Outlook, CRM comme HubSpot & Zoho.</span>
+                </div>
+            </div>
+        </section>
+
+        
+
+        <!-- À propos -->
+        <section id="a-propos" class="py-24 md:py-32">
+            <div class="max-w-3xl mx-auto text-center reveal px-6">
+                <h2 class="text-3xl md:text-4xl">À propos</h2>
+                <p class="mt-6 text-lg text-muted">OS Réceptionniste est né à Paris, porté par une équipe d'ingénieurs et de créateurs passionnés par l'automatisation intelligente au service des indépendants et des structures locales.</p>
+                <p class="mt-4 text-lg text-muted">Notre système agit comme un agent vivant : il accueille, organise, relance — pour que vous puissiez vous concentrer sur l'essentiel.</p>
+                <p class="mt-4 text-lg text-muted">Sans jargon, sans friction. Juste un OS qui travaille pour vous.</p>
+            </div>
+        </section>
+        
+        <section id="solution" class="py-24 md:py-32">
+            <div class="max-w-4xl mx-auto text-center reveal">
+                <p class="symbolic-title">COMMENT SYMI CHANGE LA DONNE</p>
+                <h2 class="text-3xl md:text-4xl mt-4">Intelligence conversationnelle avancée</h2>
+            </div>
+            <div class="max-w-6xl mx-auto mt-16 grid grid-cols-1 md:grid-cols-2 gap-10">
+                <div class="geometric-card p-8 reveal">
+                    <h3 class="font-semibold text-2xl mb-4">1. Intelligence conversationnelle</h3>
+                    <p class="text-muted">SYMI comprend vos clients, répond avec naturel et adapte ses réponses selon le contexte. Propulsé par notre Recursive Agent, il apprend de chaque interaction.</p>
+                </div>
+                <div class="geometric-card p-8 reveal" style="transition-delay: 0.1s;">
+                    <h3 class="font-semibold text-2xl mb-4">2. Disponibilité totale</h3>
+                    <p class="text-muted">24 heures sur 24, 7 jours sur 7. Vos prospects obtiennent une réponse immédiate, même quand votre bureau est fermé.</p>
+                </div>
+                <div class="geometric-card p-8 reveal" style="transition-delay: 0.2s;">
+                    <h3 class="font-semibold text-2xl mb-4">3. Intégration native</h3>
+                    <p class="text-muted">Se connecte à vos outils existants - calendriers, CRM, systèmes de messagerie. Un workflow fluide, sans rupture.</p>
+                </div>
+                <div class="geometric-card p-8 reveal" style="transition-delay: 0.3s;">
+                    <h3 class="font-semibold text-2xl mb-4">4. Personnalisation complète</h3>
+                    <p class="text-muted">La voix, le ton, les scripts : tout s'adapte à votre marque. Vos clients ont l'impression de parler directement avec votre équipe.</p>
+                </div>
+            </div>
+        </section>
+        
+        <section id="secteurs" class="py-24 md:py-32 bg-card-bg rounded-2xl">
+            <div class="max-w-5xl mx-auto text-center reveal px-6">
+                <p class="symbolic-title">CONÇU POUR VOTRE SECTEUR</p>
+                <h2 class="text-3xl md:text-4xl mt-4">Adapté à vos besoins spécifiques</h2>
+            </div>
+            <div class="max-w-7xl mx-auto mt-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 px-6">
+                <div class="text-center reveal">
+                    <div class="flex items-center justify-center w-16 h-16 bg-background border border-border rounded-xl mb-6 mx-auto"><svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg></div>
+                    <h3 class="font-semibold text-xl mb-2">Santé</h3>
+                    <p class="text-muted text-sm">Confirmations automatiques, rappels intelligents, gestion des urgences. Laissez votre équipe soignante se concentrer sur l'essentiel.</p>
+                </div>
+                <div class="text-center reveal" style="transition-delay: 0.1s;">
+                    <div class="flex items-center justify-center w-16 h-16 bg-background border border-border rounded-xl mb-6 mx-auto"><svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg></div>
+                    <h3 class="font-semibold text-xl mb-2">Services à domicile</h3>
+                    <p class="text-muted text-sm">Qualification des demandes, planification optimisée, envoi automatique des équipes. De la première demande à l'intervention.</p>
+                </div>
+                 <div class="text-center reveal" style="transition-delay: 0.2s;">
+                    <div class="flex items-center justify-center w-16 h-16 bg-background border border-border rounded-xl mb-6 mx-auto"><svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M14.121 15.536c-1.171 1.952-3.07 1.952-4.242 0-1.172-1.953-1.172-5.119 0-7.072 1.17-1.952 3.07-1.952 4.242 0 1.172 1.953 1.172 5.119 0 7.072z" /><path stroke-linecap="round" stroke-linejoin="round" d="M12 12h.01" /></svg></div>
+                    <h3 class="font-semibold text-xl mb-2">Salons & Spas</h3>
+                    <p class="text-muted text-sm">Réservations instantanées, gestion des annulations, expérience client premium. Votre agenda toujours optimisé.</p>
+                </div>
+                <div class="text-center reveal" style="transition-delay: 0.3s;">
+                    <div class="flex items-center justify-center w-16 h-16 bg-background border border-border rounded-xl mb-6 mx-auto"><svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg></div>
+                    <h3 class="font-semibold text-xl mb-2">Services professionnels</h3>
+                    <p class="text-muted text-sm">Sélection des prospects sérieux, planification des consultations, suivi personnalisé. Plus de temps pour vos missions à forte valeur.</p>
+                </div>
+            </div>
+        </section>
+        
+        <section id="mise-en-service" class="py-24 md:py-32">
+            <div class="max-w-4xl mx-auto text-center reveal">
+                <p class="symbolic-title">MISE EN SERVICE</p>
+                <h2 class="text-3xl md:text-4xl mt-4">Déploiement en 48H</h2>
+            </div>
+            <div class="max-w-5xl mx-auto mt-16 grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+                <div class="flex flex-col items-center reveal">
+                    <div class="flex items-center justify-center w-16 h-16 bg-card-bg border border-border rounded-xl mb-6"><svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg></div>
+                    <h3 class="font-semibold text-xl mb-4">1. Configuration</h3>
+                    <p class="text-muted">Notre équipe configure SYMI selon vos besoins spécifiques. Scripts personnalisés, intégrations techniques, tests complets.</p>
+                </div>
+                <div class="flex flex-col items-center reveal" style="transition-delay: 0.2s;">
+                    <div class="flex items-center justify-center w-16 h-16 bg-card-bg border border-border rounded-xl mb-6"><svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg></div>
+                    <h3 class="font-semibold text-xl mb-4">2. Déploiement</h3>
+                    <p class="text-muted">SYMI commence à gérer vos appels. Monitoring en temps réel et ajustements si nécessaire.</p>
+                </div>
+                 <div class="flex flex-col items-center reveal" style="transition-delay: 0.4s;">
+                    <div class="flex items-center justify-center w-16 h-16 bg-card-bg border border-border rounded-xl mb-6"><svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg></div>
+                    <h3 class="font-semibold text-xl mb-4">3. Optimisation continue</h3>
+                    <p class="text-muted">Analyse des performances, apprentissage des interactions, amélioration constante de l'efficacité.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="tarifs" class="py-24 md:py-32">
+            <div class="max-w-4xl mx-auto text-center">
+                <p class="symbolic-title">INVESTISSEMENT</p>
+                <h2 class="text-3xl md:text-4xl mt-4">Tarification transparente</h2>
+                <p class="max-w-2xl mx-auto mt-6 text-lg md:text-xl leading-relaxed text-muted">
+                    Facturation mensuelle. Résiliation possible à tout moment.
+                </p>
+            </div>
+
+            <div class="max-w-7xl mx-auto mt-16 grid grid-cols-1 md:grid-cols-3 gap-8">
+                <!-- Starter -->
+                <div class="pricing-tier">
+                    <h3>Starter</h3>
+                    <div class="price">280&nbsp;€</div>
+                    <div class="price-unit mb-2">Configuration</div>
+                    <div class="text-xl font-semibold mt-4">59&nbsp;€ / mois</div>
+                    <div class="text-sm text-muted">1 mois gratuit</div>
+                    <ul>
+                        <li><svg class="w-5 h-5" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"></path></svg> Prise de rendez-vous et confirmations</li>
+                        <li><svg class="w-5 h-5" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"></path></svg> Rappels SMS / email</li>
+                        <li><svg class="w-5 h-5" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"></path></svg> Transfert vers un humain</li>
+                        <li><svg class="w-5 h-5" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"></path></svg> Rapport mensuel basique</li>
+                    </ul>
+                    <a href="https://buy.stripe.com/14AeVdbgg2UD1Hjg3R9Zm02" target="_blank" rel="noopener" class="btn btn-primary pricing-cta">Choisir Starter</a>
+                </div>
+
+                <!-- Pro (featured) -->
+                <div class="pricing-tier featured-tier">
+                    <p class="symbolic-title text-accent mb-2">RECOMMANDÉ</p>
+                    <h3>Professionnel</h3>
+                    <div class="price">690&nbsp;€</div>
+                    <div class="price-unit mb-2">Configuration</div>
+                    <div class="text-xl font-semibold mt-4">119&nbsp;€ / mois</div>
+                    <div class="text-sm text-muted">1 mois gratuit</div>
+                    <ul>
+                        <li><svg class="w-5 h-5" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"></path></svg> Qualification avancée et scénarios personnalisés</li>
+                        <li><svg class="w-5 h-5" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"></path></svg> Relances intelligentes pour réduire les absences</li>
+                        <li><svg class="w-5 h-5" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"></path></svg> Intégrations calendrier étendues</li>
+                        <li><svg class="w-5 h-5" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"></path></svg> Tableau de bord détaillé</li>
+                        <li><svg class="w-5 h-5" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"></path></svg> Support prioritaire</li>
+                    </ul>
+                    <a href="https://buy.stripe.com/fZuaEXckk8eXdq12d19Zm03" target="_blank" rel="noopener" class="btn btn-primary pricing-cta">Choisir Professionnel</a>
+                </div>
+
+                <!-- Entreprise -->
+                <div class="pricing-tier">
+                    <h3>OS / Entreprise</h3>
+                    <div class="price">dès 1200€</div>
+                    <div class="price-unit mb-2">Configuration</div>
+                    <div class="text-xl font-semibold mt-4">Tarif sur mesure</div>
+                    <ul>
+                        <li><svg class="w-5 h-5" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"></path></svg> Multi-sites et volumes élevés</li>
+                        <li><svg class="w-5 h-5" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"></path></svg> Intégrations CRM et API avancées</li>
+                        <li><svg class="w-5 h-5" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"></path></svg> Workflows complexes et automatisés</li>
+                        <li><svg class="w-5 h-5" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"></path></svg> Gestionnaire de compte dédié</li>
+                        <li><svg class="w-5 h-5" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"></path></svg> Mode OS : un cerveau invisible qui écoute, organise et exécute.</li>
+                    </ul>
+                    <button id="open-contact-pricing-enterprise" class="btn">Nous contacter</button>
+                </div>
+            </div>
+        </section>
+        
+        <section id="faq" class="py-24 md:py-32">
+            <div class="max-w-4xl mx-auto text-center reveal">
+                <p class="symbolic-title">QUESTIONS ESSENTIELLES</p>
+            </div>
+            <div class="max-w-3xl mx-auto mt-12 space-y-8">
+                <div class="geometric-card p-6 reveal">
+                    <h3 class="font-semibold text-xl mb-2">Quelle est la durée de mise en service ?</h3>
+                    <p class="text-muted">Entre 48H et 5 jours ouvrés selon la complexité de votre configuration.</p>
+                </div>
+                <div class="geometric-card p-6 reveal">
+                    <h3 class="font-semibold text-xl mb-2">SYMI peut-il gérer les spécificités de mon métier ?</h3>
+                    <p class="text-muted">Absolument. Nous personnalisons entièrement les scripts et processus selon votre activité.</p>
+                </div>
+                <div class="geometric-card p-6 reveal">
+                    <h3 class="font-semibold text-xl mb-2">Comment garantissez-vous la qualité des conversations ?</h3>
+                    <p class="text-muted">Notre Recursive Agent apprend en permanence. De plus, vous disposez d'un tableau de bord pour suivre toutes les interactions.</p>
+                </div>
+                <div class="geometric-card p-6 reveal">
+                    <h3 class="font-semibold text-xl mb-2">Que se passe-t-il pour les situations complexes ?</h3>
+                    <p class="text-muted">SYMI transfère intelligemment vers votre équipe quand la situation le nécessite.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="contact" class="py-24 md:py-32 text-center">
+            <div class="max-w-4xl mx-auto reveal">
+                <h2 class="text-3xl md:text-4xl">Prochaine étape</h2>
+            </div>
+            <div class="max-w-5xl mx-auto mt-12 grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="geometric-card p-8">
+                    <h3 class="text-xl font-semibold">Découvrir SYMI</h3>
+                    <p class="text-muted mt-2">Planifiez une démonstration personnalisée pour voir comment SYMI s'adapte à votre activité.</p>
+                </div>
+                <div class="geometric-card p-8">
+                    <h3 class="text-xl font-semibold">Commencer maintenant</h3>
+                    <p class="text-muted mt-2">Mise en service à partir de 48h selon l'offre.</p>
+                </div>
+                <div class="geometric-card p-8">
+                    <h3 class="text-xl font-semibold">Poser vos questions</h3>
+                    <p class="text-muted mt-2">Échangez avec notre équipe sur vos besoins spécifiques.</p>
+                </div>
+            </div>
+            <p class="mt-12 text-lg text-muted">SYMI s'adapte à votre rythme, pas l'inverse.</p>
+        </section>
+
+    </main>
+
+    <footer class="py-12 border-t border-border mt-16">
+        <div class="max-w-6xl mx-auto px-6">
+            <div class="flex flex-col md:flex-row items-center justify-between gap-6">
+                <div class="flex items-center gap-3">
+                    <span class="pulse-dot"></span>
+                    <span class="text-sm text-muted">Vos données sont sécurisées. Hébergées en Europe, conformes RGPD. Accords DPA disponibles sur demande.</span>
+                </div>
+                <div class="flex items-center gap-4 text-sm">
+                    <button id="open-cgu" class="text-muted hover:text-foreground">CGU</button>
+                    <button id="open-mentions" class="text-muted hover:text-foreground">Mentions légales</button>
+                    <button id="open-privacy" class="text-muted hover:text-foreground">Politique de confidentialité</button>
+                </div>
+            </div>
+            <div class="text-center text-sm text-muted font-mono mt-8">
+            <p>&copy; 2025 SYMI - Réceptionniste intelligent</p>
+            </div>
+        </div>
+    </footer>
+
+    <audio id="tts-audio" class="hidden"></audio>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Subtle motion animation for the left logo square using Motion One
+        (async () => {
+            try {
+                const { animate } = await import('https://cdn.jsdelivr.net/npm/motion@12.23.12/+esm');
+                const square = document.querySelector('.logo-square-anim');
+                if (square) {
+                    animate(
+                        square,
+                        { rotate: [0, 6, 0] },
+                        { type: 'spring', stiffness: 120, damping: 16, repeat: Infinity, repeatDelay: 0.6 }
+                    );
+                }
+            } catch (e) {
+                // ignore animation failure silently
+            }
+        })();
+
+        // --- Standard Page Logic (Header, Scroll, etc.) ---
+        const header = document.getElementById('sticky-header');
+        const scrollThreshold = 100;
+
+        const handleScroll = () => {
+            if (window.scrollY > scrollThreshold) {
+                header.classList.add('scrolled');
+            } else {
+                header.classList.remove('scrolled');
+            }
+        };
+        window.addEventListener('scroll', handleScroll, { passive: true });
+
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('href');
+                const targetElement = document.querySelector(targetId);
+                const offset = header.offsetHeight; 
+
+                if (targetElement) {
+                    window.scrollTo({
+                        top: targetElement.offsetTop - offset,
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+
+        const revealElements = document.querySelectorAll('.reveal');
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, { threshold: 0.1 }); 
+        revealElements.forEach(el => observer.observe(el));
+
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const closeMobileMenuButton = document.getElementById('close-mobile-menu');
+        const mobileMenu = document.getElementById('mobile-menu');
+        const mobileMenuLinks = mobileMenu.querySelectorAll('.menu-link');
+        const openContactBtn = document.getElementById('open-contact');
+        const openContactBtnMobile = document.getElementById('open-contact-mobile');
+        const modal = document.getElementById('symi-modal');
+        const modalClose = document.getElementById('symi-modal-close');
+        const modalTitle = document.getElementById('symi-modal-title');
+        const modalBody = document.getElementById('symi-modal-body');
+        const openContactPricingEnterprise = document.getElementById('open-contact-pricing-enterprise');
+        const openCgu = document.getElementById('open-cgu');
+        const openMentions = document.getElementById('open-mentions');
+        const openPrivacy = document.getElementById('open-privacy');
+
+        const closeMenu = () => {
+            mobileMenu.classList.add('hidden');
+            document.body.style.overflow = '';
+        };
+
+        mobileMenuButton.addEventListener('click', () => {
+            mobileMenu.classList.remove('hidden');
+            document.body.style.overflow = 'hidden'; 
+        });
+        
+        closeMobileMenuButton.addEventListener('click', closeMenu);
+        mobileMenu.addEventListener('click', (event) => {
+            if (event.target === mobileMenu) {
+                closeMenu();
+            }
+        });
+        mobileMenuLinks.forEach(link => link.addEventListener('click', closeMenu));
+
+        // --- Modal logic ---
+        function openModal(titleText, contentHTML) {
+            modalTitle.textContent = titleText;
+            if (contentHTML) {
+                modalBody.innerHTML = contentHTML;
+            }
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeModal() {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            document.body.style.overflow = '';
+        }
+        [openContactBtn].forEach(btn => {
+            if (btn) {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    openModal('Contact SYMI');
+                });
+            }
+        });
+        [openContactBtnMobile].forEach(btn => {
+            if (btn) {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    openModal('Contact SYMI');
+                    closeMenu();
+                });
+            }
+        });
+        if (openContactPricingEnterprise) {
+            openContactPricingEnterprise.addEventListener('click', (e) => {
+                e.preventDefault();
+                openModal('Contact SYMI');
+            });
+        }
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeModal();
+        });
+        if (modalClose) modalClose.addEventListener('click', closeModal);
+
+        // --- Legal modal contents ---
+        const contentPrivacy = `
+            <div class="w-full bg-gradient-to-b from-white to-[rgba(230,220,255,0.6)]">
+                <div class="px-6 pt-8 pb-4 flex items-center gap-3">
+                    <svg width="28" height="28" viewBox="0 0 54 54" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="3" width="48" height="48" rx="12" fill="#A890FE" />
+                    </svg>
+                    <h4 class="text-2xl font-semibold text-foreground">Politique de confidentialité</h4>
+                </div>
+            </div>
+            <div class="px-6 py-6 space-y-4 text-sm leading-6 text-muted">
+                <p>Nous traitons vos données personnelles dans le respect du RGPD et des standards de sécurité les plus élevés. Les informations collectées sont limitées au strict nécessaire.</p>
+                <p><strong class="text-foreground">Responsable de traitement</strong> : SYMI, Paris – <a href="mailto:contact@symi.io" class="underline">contact@symi.io</a></p>
+                <p><strong class="text-foreground">Finalités</strong> : exécution du service, support client, amélioration continue, sécurité.</p>
+                <p><strong class="text-foreground">Base légale</strong> : exécution contractuelle & intérêt légitime.</p>
+                <p><strong class="text-foreground">Durée de conservation</strong> : limitée au temps strictement nécessaire.</p>
+                <p><strong class="text-foreground">Vos droits</strong> : accès, rectification, suppression, opposition. Contactez-nous pour les exercer : <a href="mailto:contact@symi.io" class="underline">contact@symi.io</a></p>
+                <p><strong class="text-foreground">Sous-traitance & hébergement</strong> : données hébergées en Europe. Liste des prestataires et DPA disponibles sur demande.</p>
+            </div>`;
+
+        const contentMentions = `
+            <div class="w-full bg-gradient-to-b from-white to-[rgba(230,220,255,0.6)]">
+                <div class="px-6 pt-8 pb-4 flex items-center gap-3">
+                    <svg width="28" height="28" viewBox="0 0 54 54" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="3" width="48" height="48" rx="12" fill="#A890FE" />
+                    </svg>
+                    <h4 class="text-2xl font-semibold text-foreground">Mentions légales</h4>
+                </div>
+            </div>
+            <div class="px-6 py-6 space-y-4 text-sm leading-6 text-muted">
+                <p><strong class="text-foreground">Éditeur</strong> : SYMI, Paris – <a href="mailto:contact@symi.io" class="underline">contact@symi.io</a></p>
+                <p><strong class="text-foreground">Hébergement</strong> : en Europe, prestataires conformes au RGPD (détails sur demande).</p>
+                <p><strong class="text-foreground">Propriété intellectuelle</strong> : l'ensemble des contenus (textes, visuels, interface) sont protégés. Toute reproduction sans autorisation est strictement interdite.</p>
+                <p><strong class="text-foreground">Exactitude</strong> : nous faisons tout pour garantir la fiabilité des informations. Si une erreur s'est glissée, contactez-nous pour correction.</p>
+            </div>`;
+
+        const contentCGU = `
+            <div class="w-full bg-gradient-to-b from-white to-[rgba(230,220,255,0.6)]">
+                <div class="px-6 pt-8 pb-4 flex items-center gap-3">
+                    <svg width="28" height="28" viewBox="0 0 54 54" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="3" width="48" height="48" rx="12" fill="#A890FE" />
+                    </svg>
+                    <h4 class="text-2xl font-semibold text-foreground">Conditions Générales d'Utilisation</h4>
+                </div>
+            </div>
+            <div class="px-6 py-6 space-y-4 text-sm leading-6 text-muted">
+                <p>En utilisant le service SYMI, vous acceptez ces conditions générales.</p>
+                <p><strong class="text-foreground">Accès</strong> : SYMI est accessible 24h/24, 7j/7 (hors maintenance ou interruptions exceptionnelles).</p>
+                <p><strong class="text-foreground">Utilisation</strong> : vous vous engagez à utiliser SYMI de manière légale, éthique et respectueuse de l'infrastructure.</p>
+                <p><strong class="text-foreground">Responsabilité</strong> : SYMI ne saurait être tenu responsable des dommages indirects. En cas de dysfonctionnement, notre équipe réagit rapidement.</p>
+                <p><strong class="text-foreground">Évolution</strong> : le service peut évoluer à tout moment pour améliorer l'expérience utilisateur.</p>
+                <p><strong class="text-foreground">Données</strong> : leur traitement est conforme à la Politique de confidentialité.</p>
+            </div>`;
+
+        if (openPrivacy) openPrivacy.addEventListener('click', () => openModal('Politique de confidentialité', contentPrivacy));
+        if (openMentions) openMentions.addEventListener('click', () => openModal('Mentions légales', contentMentions));
+        if (openCgu) openCgu.addEventListener('click', () => openModal("Conditions Générales d'Utilisation", contentCGU));
+
+
+        // --- Interactive Voice Demo Logic (via ElevenLabs backend) ---
+        const demoBtn = document.getElementById('demo-btn');
+        const demoBtnText = document.getElementById('demo-btn-text');
+        const voiceSelectContainer = document.getElementById('voice-select-container');
+        const voiceBtns = voiceSelectContainer.querySelectorAll('.voice-btn');
+        const statusDisplay = document.getElementById('status-display');
+        const waveCanvas = document.getElementById('voice-wave');
+        const canvasCtx = waveCanvas.getContext('2d');
+        const audioEl = document.getElementById('tts-audio');
+        
+        const appState = {
+            demoState: 'idle', // idle | speaking
+            audioContext: null,
+            analyser: null,
+            sourceNode: null,
+            dataArray: null,
+            animationFrameId: null,
+            speakingAnimationTime: 0,
+            selectedVoice: 'simon'
+        };
+
+        const scripts = {
+            simon: "Bonjour, ici Simon, votre assistant intelligent. Je prends vos appels à toute heure, tous les jours. Je fixe les rendez‑vous et j’envoie des rappels pour éviter les oublis. Même quand vous êtes occupé, vos clients sont bien accueillis.",
+            lena: "Bonjour, je suis Léna, la voix de SYMI. J’accueille vos clients avec le sourire, je filtre les urgences et j’organise vos rendez‑vous. Grâce à moi, plus de stress ni d’appels manqués : vos clients sont pris en charge immédiatement."
+        };
+
+        // Prefetch TTS audio in background to reduce perceived latency
+        const cachedAudio = { simon: null, lena: null };
+        async function prefetchTTS(voice) {
+            try {
+                if (cachedAudio[voice]) return;
+                const res = await fetch('/api/tts', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ voice, text: scripts[voice] })
+                });
+                if (!res.ok) return;
+                const blob = await res.blob();
+                cachedAudio[voice] = URL.createObjectURL(blob);
+            } catch (_) {
+                // Silent: fallback will fetch on click
+            }
+        }
+        
+        function clearCanvas() {
+            canvasCtx.clearRect(0, 0, waveCanvas.width, waveCanvas.height);
+            canvasCtx.beginPath();
+            canvasCtx.moveTo(0, waveCanvas.height / 2);
+            canvasCtx.lineTo(waveCanvas.width, waveCanvas.height / 2);
+            canvasCtx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--border');
+            canvasCtx.lineWidth = 1.5;
+            canvasCtx.stroke();
+        }
+
+        function draw() {
+            appState.animationFrameId = requestAnimationFrame(draw);
+            const WIDTH = waveCanvas.width;
+            const HEIGHT = waveCanvas.height;
+            canvasCtx.clearRect(0, 0, WIDTH, HEIGHT);
+
+            if (appState.demoState === 'speaking' && appState.analyser) {
+                appState.analyser.getByteFrequencyData(appState.dataArray);
+                const barWidth = (WIDTH / (appState.dataArray.length / 2)) * 1.5;
+                let x = 0;
+                for (let i = 0; i < appState.dataArray.length / 2; i++) {
+                    const barHeight = appState.dataArray[i] / 2;
+                     canvasCtx.fillStyle = `rgba(168, 144, 254, ${barHeight / 100})`;
+                    canvasCtx.fillRect(x, HEIGHT / 2 - barHeight / 2, barWidth, barHeight);
+                    x += barWidth + 1;
+                }
+            } else {
+                clearCanvas();
+            }
+        }
+
+        function setupVoiceSelection() {
+            const savedVoice = localStorage.getItem('symi_voice') || 'simon';
+            appState.selectedVoice = savedVoice;
+            voiceBtns.forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.voice === savedVoice);
+            });
+            voiceBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    if (appState.demoState === 'speaking') return;
+                    voiceBtns.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    appState.selectedVoice = btn.dataset.voice;
+                    localStorage.setItem('symi_voice', appState.selectedVoice);
+                });
+            });
+        }
+
+        async function ensureAudioAnalyser() {
+            if (!appState.audioContext) {
+                appState.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (!appState.analyser) {
+                appState.analyser = appState.audioContext.createAnalyser();
+                appState.analyser.fftSize = 256;
+                appState.dataArray = new Uint8Array(appState.analyser.frequencyBinCount);
+            }
+            if (!appState.sourceNode) {
+                appState.sourceNode = appState.audioContext.createMediaElementSource(audioEl);
+                appState.sourceNode.connect(appState.analyser);
+                appState.analyser.connect(appState.audioContext.destination);
+            }
+        }
+
+        async function playSelectedVoice() {
+            const voice = appState.selectedVoice;
+            const text = scripts[voice];
+            try {
+                demoBtn.classList.add('active');
+                demoBtnText.textContent = 'Lecture en cours...';
+                statusDisplay.textContent = 'Génération de la voix...';
+
+                await ensureAudioAnalyser();
+                draw();
+
+                if (cachedAudio[voice]) {
+                    audioEl.src = cachedAudio[voice];
+                } else {
+                    const res = await fetch('/api/tts', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ voice, text })
+                    });
+                    if (!res.ok) throw new Error('Echec TTS');
+                    const blob = await res.blob();
+                    const url = URL.createObjectURL(blob);
+                    audioEl.src = url;
+                    cachedAudio[voice] = url;
+                }
+
+                appState.demoState = 'speaking';
+                statusDisplay.textContent = 'SYMI parle...';
+                await audioEl.play();
+            } catch (e) {
+                console.error(e);
+                statusDisplay.textContent = 'Erreur de lecture.';
+                stopPlayback(true);
+            }
+        }
+
+        function stopPlayback(isError = false) {
+                appState.demoState = 'idle';
+            demoBtn.classList.remove('active');
+            demoBtnText.textContent = 'Voix de démo';
+            if (!isError) statusDisplay.textContent = 'Prêt pour la démonstration';
+            cancelAnimationFrame(appState.animationFrameId);
+            clearCanvas();
+        }
+
+        audioEl.addEventListener('ended', () => {
+            stopPlayback(false);
+        });
+
+        demoBtn.addEventListener('click', () => {
+            if (appState.demoState === 'speaking') {
+                audioEl.pause();
+                audioEl.currentTime = 0;
+                stopPlayback(false);
+            } else {
+                playSelectedVoice();
+            }
+        });
+
+        // Initial Setup
+        setupVoiceSelection();
+        clearCanvas();
+        // Kick off background prefetch to reduce first-click latency
+        prefetchTTS('simon');
+        prefetchTTS('lena');
+
+    });
+    </script>
+</body>
+</html>

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="fr" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CGU – SYMI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --background: #F9F9FD;
+            --foreground: #1A1A3A;
+            --text: #4A4A6A;
+            --muted: rgba(74, 74, 106, 0.7);
+            --accent: #A890FE;
+            --accent-soft: rgba(230, 220, 255, 0.8);
+            --border: rgba(74, 74, 106, 0.15);
+            --card-bg: #FFFFFF;
+        }
+        body { background: var(--background); color: var(--text); font-family: Inter, sans-serif; }
+        .glass {
+            position: relative;
+            border-radius: 28px;
+            background: rgba(255,255,255,0.3);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+        .glass::before {
+            content: "";
+            position: absolute; inset: 0; border-radius: 28px; pointer-events: none;
+            background: linear-gradient(180deg, rgba(255,255,255,0.6), rgba(255,255,255,0));
+        }
+        .stroke { position: relative; }
+        .stroke::after {
+            content: ""; position: absolute; inset: 0; border-radius: 28px; pointer-events: none;
+            border: 2px solid rgba(255,255,255,0.25);
+        }
+        a { color: var(--foreground); }
+    </style>
+</head>
+<body>
+    <main class="min-h-screen flex items-center justify-center p-6">
+        <div class="max-w-3xl w-full glass stroke p-8">
+            <div class="flex items-center gap-3 mb-6">
+                <a href="./receptionniste.html" class="text-sm">← Retour</a>
+                <span class="text-sm text-muted">CGU</span>
+            </div>
+            <h1 class="text-3xl font-semibold text-[color:var(--foreground)] mb-4">Conditions Générales d’Utilisation</h1>
+            <div class="prose prose-neutral max-w-none">
+                <p>En utilisant SYMI, vous acceptez ces conditions générales. Le service est proposé “en l’état” et peut évoluer sans préavis pour améliorer l’expérience.</p>
+                <h2>Accès au service</h2>
+                <p>SYMI est accessible 24/7 sous réserve d’interruptions de maintenance. Nous mettons en œuvre les moyens nécessaires pour assurer la disponibilité.</p>
+                <h2>Utilisation</h2>
+                <p>Vous vous engagez à utiliser le service conformément au droit applicable et à ne pas perturber son bon fonctionnement.</p>
+                <h2>Responsabilité</h2>
+                <p>Nous ne saurions être responsables des dommages indirects. En cas de dysfonctionnement, contactez-nous pour correction rapide.</p>
+                <h2>Données</h2>
+                <p>Les données sont traitées conformément au RGPD. Voir la Politique de confidentialité.</p>
+                <h2>Contact</h2>
+                <p><a href="mailto:contact@symi.io">contact@symi.io</a></p>
+            </div>
+        </div>
+    </main>
+</body>
+</html>
+
+
