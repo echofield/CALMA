@@ -1,4 +1,3 @@
-import { ImageWithFallback } from './components/figma/ImageWithFallback';
 import { Button } from './components/ui/button';
 import { AuditCalculatorPro } from './components/AuditCalculatorPro';
 import { VoiceTestTool } from './components/VoiceTestTool';

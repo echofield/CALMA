@@ -1,5 +1,4 @@
-import { useState, useEffect } from 'react';
-import { motion } from 'motion/react';
+import { useEffect } from 'react';
 import { Play, Pause, Loader2, AlertCircle } from 'lucide-react';
 import {
   Dialog,

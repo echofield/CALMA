@@ -88,7 +88,7 @@ export function useVoiceDemo({ apiEndpoint, scripts }: UseVoiceDemoOptions): Use
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    analyser.getByteFrequencyData(dataArray);
+    analyser.getByteFrequencyData(dataArray as Uint8Array<ArrayBuffer>);
 
     // Get CSS dimensions (context is already scaled by devicePixelRatio)
     const rect = canvas.getBoundingClientRect();

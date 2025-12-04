@@ -26,10 +26,10 @@ export function AuditCalculatorPro() {
     const response = parseFloat(formData.responseRate) || 0;
     const conversion = parseFloat(formData.conversionRate) || 0;
     const ticket = parseFloat(formData.averageTicket) || 0;
-    const events = parseFloat(formData.eventsPerMonth) || 0;
-    const eventTicket = parseFloat(formData.eventTicket) || 0;
-    const noShows = parseFloat(formData.noShowsPerMonth) || 0;
-    const employeeCost = parseFloat(formData.employeeCost) || 0;
+    const _events = parseFloat(formData.eventsPerMonth) || 0;
+    const _eventTicket = parseFloat(formData.eventTicket) || 0;
+    const _noShows = parseFloat(formData.noShowsPerMonth) || 0;
+    const _employeeCost = parseFloat(formData.employeeCost) || 0;
 
     if (calls && response && conversion && ticket) {
       setShowResults(true);
