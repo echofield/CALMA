@@ -188,9 +188,17 @@ export function useVoiceDemo({ apiEndpoint, scripts }: UseVoiceDemoOptions): Use
     const blob = await response.blob();
     
     // Vérifier que c'est bien un fichier audio
-    if (!blob.type.startsWith('audio/')) {
-      throw new Error('Réponse serveur invalide : format audio attendu');
+    // Le serveur peut retourner audio/mpeg ou application/octet-stream
+    if (blob.size === 0) {
+      throw new Error('Réponse serveur vide');
     }
+    
+    // Log pour debug
+    console.log('Audio blob received:', {
+      size: blob.size,
+      type: blob.type,
+      cacheKey
+    });
     
     const url = URL.createObjectURL(blob);
     audioCache.set(cacheKey, url);
@@ -213,11 +221,48 @@ export function useVoiceDemo({ apiEndpoint, scripts }: UseVoiceDemoOptions): Use
 
       // Set audio source and play
       audioRef.current.src = audioUrl;
+      
+      // Attendre que l'audio soit chargé
+      await new Promise((resolve, reject) => {
+        if (!audioRef.current) {
+          reject(new Error('Audio element not available'));
+          return;
+        }
+        
+        const audio = audioRef.current;
+        
+        const handleCanPlay = () => {
+          audio.removeEventListener('canplay', handleCanPlay);
+          audio.removeEventListener('error', handleError);
+          resolve(undefined);
+        };
+        
+        const handleError = (e: Event) => {
+          audio.removeEventListener('canplay', handleCanPlay);
+          audio.removeEventListener('error', handleError);
+          const error = (e.target as HTMLAudioElement).error;
+          reject(new Error(`Erreur audio: ${error?.code} - ${error?.message || 'Unknown error'}`));
+        };
+        
+        if (audio.readyState >= 2) {
+          // Already loaded
+          resolve(undefined);
+        } else {
+          audio.addEventListener('canplay', handleCanPlay);
+          audio.addEventListener('error', handleError);
+          audio.load();
+        }
+      });
+      
       audioRef.current.onended = () => {
         setState('idle');
       };
-      audioRef.current.onerror = () => {
-        setError('Erreur de lecture audio');
+      audioRef.current.onerror = (e) => {
+        const error = (e.target as HTMLAudioElement).error;
+        const errorMsg = error 
+          ? `Erreur audio (code ${error.code}): ${error.message}`
+          : 'Erreur de lecture audio';
+        setError(errorMsg);
         setState('error');
       };
 
