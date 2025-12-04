@@ -34,7 +34,7 @@ export function useVoiceDemo({ apiEndpoint, scripts }: UseVoiceDemoOptions): Use
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   const animationFrameIdRef = useRef<number | null>(null);
-  const sourceNodeRef = useRef<MediaElementAudioSourceNode | null>(null);
+  const sourceNodeRef = useRef<MediaElementAudioSourceNode | null | 'exists'>(null);
 
   // Setup Web Audio API
   const setupAudioAnalyser = useCallback(async () => {
@@ -61,31 +61,36 @@ export function useVoiceDemo({ apiEndpoint, scripts }: UseVoiceDemoOptions): Use
       }
 
       // Connect audio element to analyser
-      // Note: createMediaElementSource can only be called once per audio element
+      // CRITICAL: createMediaElementSource can only be called ONCE per audio element
+      // If it was already called, we cannot create it again
       if (!sourceNodeRef.current && audioRef.current) {
         try {
           const source = ctx.createMediaElementSource(audioRef.current);
           sourceNodeRef.current = source;
           source.connect(analyser!);
           analyser!.connect(ctx.destination);
-        } catch (err) {
-          // Si l'audio source existe déjà, on peut juste connecter l'analyser
-          console.warn('Audio source already exists, reusing:', err);
-          if (analyser) {
-            analyser.connect(ctx.destination);
-          }
+        } catch (err: any) {
+          // If source already exists, we cannot use visualization
+          // But we can still play audio without visualization
+          // Set a flag to indicate source exists but we can't use it
+          console.warn('Audio source already exists, visualization will be disabled');
+          // Set to a special value to indicate "exists but can't use"
+          sourceNodeRef.current = 'exists' as any;
         }
       }
     } catch (err) {
       console.error('Error setting up audio analyser:', err);
-      setError('Erreur de configuration audio');
-      setState('error');
+      // Don't set error state - allow audio to play without visualization
+      // setError('Erreur de configuration audio');
+      // setState('error');
     }
   }, [audioContext, analyser]);
 
   // Draw audio visualization
   const drawVisualization = useCallback(() => {
-    if (!canvasRef.current || !analyser || !dataArray || state !== 'playing') {
+    // Skip visualization if source node doesn't exist or is invalid
+    const hasValidSource = sourceNodeRef.current && sourceNodeRef.current !== 'exists';
+    if (!canvasRef.current || !analyser || !dataArray || !hasValidSource || state !== 'playing') {
       if (animationFrameIdRef.current) {
         cancelAnimationFrame(animationFrameIdRef.current);
         animationFrameIdRef.current = null;
@@ -125,7 +130,8 @@ export function useVoiceDemo({ apiEndpoint, scripts }: UseVoiceDemoOptions): Use
 
   // Start visualization when playing
   useEffect(() => {
-    if (state === 'playing' && analyser && dataArray) {
+    const hasValidSource = sourceNodeRef.current && sourceNodeRef.current !== 'exists';
+    if (state === 'playing' && analyser && dataArray && hasValidSource) {
       drawVisualization();
     } else if (animationFrameIdRef.current) {
       cancelAnimationFrame(animationFrameIdRef.current);
@@ -216,14 +222,22 @@ export function useVoiceDemo({ apiEndpoint, scripts }: UseVoiceDemoOptions): Use
 
   // Play audio
   const playAudio = useCallback(async (voiceId: string) => {
-    if (!audioRef.current) return;
+    if (!audioRef.current) {
+      console.error('Audio ref not available');
+      return;
+    }
 
     try {
       setState('loading');
       setError(null);
 
-      // Setup audio analyser
-      await setupAudioAnalyser();
+      // Setup audio analyser (may fail for visualization, but audio should still play)
+      try {
+        await setupAudioAnalyser();
+      } catch (setupErr) {
+        console.warn('Audio analyser setup failed, continuing without visualization:', setupErr);
+        // Continue anyway - audio can play without visualization
+      }
 
       // Fetch audio
       const audioUrl = await fetchAudio(voiceId);
@@ -328,7 +342,7 @@ export function useVoiceDemo({ apiEndpoint, scripts }: UseVoiceDemoOptions): Use
       if (animationFrameIdRef.current) {
         cancelAnimationFrame(animationFrameIdRef.current);
       }
-      if (sourceNodeRef.current) {
+      if (sourceNodeRef.current && sourceNodeRef.current !== 'exists') {
         sourceNodeRef.current.disconnect();
       }
       if (audioContext && audioContext.state !== 'closed') {
