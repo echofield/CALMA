@@ -27,7 +27,6 @@ export function VoiceDemo({ open, onOpenChange }: VoiceDemoProps) {
     selectVoice,
     playAudio,
     stopAudio,
-    initializeAudio,
     canvasRef,
     audioRef,
   } = useVoiceDemo({
@@ -75,22 +74,18 @@ export function VoiceDemo({ open, onOpenChange }: VoiceDemoProps) {
     return () => window.removeEventListener('resize', handleResize);
   }, [canvasRef, open]);
 
-  // Initialize audio when modal opens
+  // Prevent body scroll when modal is open
   useEffect(() => {
     if (open) {
       document.body.style.overflow = 'hidden';
       console.log('VoiceDemo modal opened');
-      // Initialize audio system once when modal opens
-      initializeAudio().catch((err) => {
-        console.error('Failed to initialize audio:', err);
-      });
     } else {
       document.body.style.overflow = '';
     }
     return () => {
       document.body.style.overflow = '';
     };
-  }, [open, initializeAudio]);
+  }, [open]);
 
   const handlePlayPause = () => {
     if (state === 'playing') {
@@ -296,54 +291,12 @@ export function VoiceDemo({ open, onOpenChange }: VoiceDemoProps) {
         </div>
 
         {/* Canvas Visualization */}
-        <div style={{ marginBottom: '16px' }}>
-          {state === 'playing' && (
-            <div style={{
-              textAlign: 'center',
-              marginBottom: '12px',
-              padding: '8px 16px',
-              backgroundColor: '#FFFFFF',
-              borderRadius: '8px',
-              border: '1px solid #E0E0E0',
-              display: 'inline-block',
-              width: '100%',
-            }}>
-              <p style={{
-                fontSize: '0.9rem',
-                color: '#BFA97A',
-                fontFamily: 'Montserrat, sans-serif',
-                fontWeight: 500,
-                margin: 0,
-              }}>
-                Lecture en cours...
-              </p>
-            </div>
-          )}
-          <div style={{ 
-            height: '80px', 
-            backgroundColor: '#F5EEDF',
-            borderRadius: '12px',
-            padding: '12px',
-            border: '1px solid #E0E0E0'
-          }}>
-            <canvas
-              ref={canvasRef}
-              style={{ width: '100%', height: '100%', display: 'block' }}
-              aria-label="Visualisation audio"
-            />
-          </div>
-          {state === 'playing' && (
-            <p style={{
-              textAlign: 'center',
-              marginTop: '8px',
-              fontSize: '0.85rem',
-              color: '#1A1A1A',
-              fontFamily: 'Montserrat, sans-serif',
-              fontWeight: 400,
-            }}>
-              CALMA parle...
-            </p>
-          )}
+        <div style={{ height: '64px', marginBottom: '16px' }}>
+          <canvas
+            ref={canvasRef}
+            style={{ width: '100%', height: '100%' }}
+            aria-label="Visualisation audio"
+          />
         </div>
 
         {/* Status */}

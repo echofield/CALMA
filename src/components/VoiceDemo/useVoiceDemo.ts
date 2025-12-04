@@ -17,7 +17,6 @@ interface UseVoiceDemoReturn {
   selectVoice: (voiceId: string) => void;
   playAudio: (voiceId: string) => Promise<void>;
   stopAudio: () => void;
-  initializeAudio: () => Promise<boolean>;
   canvasRef: React.RefObject<HTMLCanvasElement>;
   audioRef: React.RefObject<HTMLAudioElement>;
 }
@@ -37,14 +36,9 @@ export function useVoiceDemo({ apiEndpoint, scripts }: UseVoiceDemoOptions): Use
   const animationFrameIdRef = useRef<number | null>(null);
   const sourceNodeRef = useRef<MediaElementAudioSourceNode | null>(null);
 
-  // Initialize Web Audio API - called once when modal opens
-  const initializeAudio = useCallback(async () => {
-    if (!audioRef.current) return false;
-
-    // Already initialized
-    if (sourceNodeRef.current && audioContext && analyser) {
-      return true;
-    }
+  // Setup Web Audio API
+  const setupAudioAnalyser = useCallback(async () => {
+    if (!audioRef.current) return;
 
     try {
       // Create or resume AudioContext
@@ -59,41 +53,33 @@ export function useVoiceDemo({ apiEndpoint, scripts }: UseVoiceDemoOptions): Use
       }
 
       // Create analyser if not exists
-      let analyserNode = analyser;
-      if (!analyserNode) {
-        analyserNode = ctx.createAnalyser();
+      if (!analyser) {
+        const analyserNode = ctx.createAnalyser();
         analyserNode.fftSize = 256;
         setAnalyser(analyserNode);
         setDataArray(new Uint8Array(analyserNode.frequencyBinCount));
       }
 
       // Connect audio element to analyser
-      // CRITICAL: createMediaElementSource can only be called ONCE per audio element
-      // If called multiple times, it throws an error
+      // Note: createMediaElementSource can only be called once per audio element
       if (!sourceNodeRef.current && audioRef.current) {
         try {
           const source = ctx.createMediaElementSource(audioRef.current);
           sourceNodeRef.current = source;
-          // Connect: source -> analyser -> destination
-          source.connect(analyserNode);
-          analyserNode.connect(ctx.destination);
-          console.log('Audio source initialized successfully');
-          return true;
-        } catch (err: any) {
-          // This should not happen if we check properly, but handle it gracefully
-          console.error('Failed to create audio source:', err);
-          // If source creation fails, we can't do visualization
-          // But we can still play audio without visualization
-          return false;
+          source.connect(analyser!);
+          analyser!.connect(ctx.destination);
+        } catch (err) {
+          // Si l'audio source existe déjà, on peut juste connecter l'analyser
+          console.warn('Audio source already exists, reusing:', err);
+          if (analyser) {
+            analyser.connect(ctx.destination);
+          }
         }
       }
-      
-      return true;
     } catch (err) {
-      console.error('Error initializing audio:', err);
+      console.error('Error setting up audio analyser:', err);
       setError('Erreur de configuration audio');
       setState('error');
-      return false;
     }
   }, [audioContext, analyser]);
 
@@ -121,51 +107,17 @@ export function useVoiceDemo({ apiEndpoint, scripts }: UseVoiceDemoOptions): Use
     // Clear canvas using actual pixel dimensions
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    const barCount = Math.min(dataArray.length / 2, 60); // Limit to 60 bars for better performance
-    const barWidth = (WIDTH / barCount) * 0.6; // 60% width, 40% spacing
-    const spacing = (WIDTH / barCount) * 0.4;
-    let x = spacing / 2;
+    const barWidth = (WIDTH / (dataArray.length / 2)) * 1.5;
+    let x = 0;
 
-    // Helper function to draw rounded rectangle
-    const drawRoundedRect = (x: number, y: number, width: number, height: number, radius: number) => {
-      ctx.beginPath();
-      ctx.moveTo(x + radius, y);
-      ctx.lineTo(x + width - radius, y);
-      ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
-      ctx.lineTo(x + width, y + height - radius);
-      ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
-      ctx.lineTo(x + radius, y + height);
-      ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
-      ctx.lineTo(x, y + radius);
-      ctx.quadraticCurveTo(x, y, x + radius, y);
-      ctx.closePath();
-    };
-
-    for (let i = 0; i < barCount; i++) {
-      const dataIndex = Math.floor((i / barCount) * (dataArray.length / 2));
-      const barHeight = (dataArray[dataIndex] / 255) * HEIGHT * 0.9; // Scale to 90% of height
-      const minHeight = HEIGHT * 0.05; // Minimum bar height for visibility
-      const finalHeight = Math.max(barHeight, minHeight);
+    for (let i = 0; i < dataArray.length / 2; i++) {
+      const barHeight = (dataArray[i] / 255) * HEIGHT * 0.8; // Scale to 80% of height
+      const opacity = Math.min(barHeight / (HEIGHT * 0.4), 1);
       
-      // Calculate position (centered vertically)
-      const y = (HEIGHT - finalHeight) / 2;
-      const radius = Math.min(barWidth / 2, 4); // Rounded corners
-      
-      // Create gradient for 3D effect
-      const gradient = ctx.createLinearGradient(x, y, x + barWidth, y + finalHeight);
-      const baseColor = { r: 191, g: 169, b: 122 }; // CALMA beige
-      const intensity = dataArray[dataIndex] / 255;
-      
-      // Light gradient (lighter at top, darker at bottom)
-      gradient.addColorStop(0, `rgba(${baseColor.r + 30}, ${baseColor.g + 30}, ${baseColor.b + 30}, ${intensity * 0.9})`);
-      gradient.addColorStop(0.5, `rgba(${baseColor.r}, ${baseColor.g}, ${baseColor.b}, ${intensity * 0.8})`);
-      gradient.addColorStop(1, `rgba(${baseColor.r - 20}, ${baseColor.g - 20}, ${baseColor.b - 20}, ${intensity * 0.7})`);
-      
-      ctx.fillStyle = gradient;
-      drawRoundedRect(x, y, barWidth, finalHeight, radius);
-      ctx.fill();
-      
-      x += barWidth + spacing;
+      ctx.fillStyle = `rgba(191, 169, 122, ${opacity})`;
+      // Use CSS dimensions since context is already scaled
+      ctx.fillRect(x, HEIGHT / 2 - barHeight / 2, barWidth, barHeight);
+      x += barWidth + 1;
     }
 
     animationFrameIdRef.current = requestAnimationFrame(drawVisualization);
@@ -206,7 +158,6 @@ export function useVoiceDemo({ apiEndpoint, scripts }: UseVoiceDemoOptions): Use
 
   // Fetch audio from API
   const fetchAudio = useCallback(async (voiceId: string): Promise<string> => {
-    console.log('fetchAudio called for voice:', voiceId);
     const text = scripts[voiceId];
     if (!text) {
       throw new Error(`Script non trouvé pour la voix ${voiceId}`);
@@ -215,13 +166,9 @@ export function useVoiceDemo({ apiEndpoint, scripts }: UseVoiceDemoOptions): Use
     // Check cache
     const cacheKey = `${voiceId}-${text}`;
     if (audioCache.has(cacheKey)) {
-      console.log('Using cached audio for:', cacheKey);
       return audioCache.get(cacheKey)!;
     }
 
-    console.log('Fetching audio from API:', apiEndpoint);
-    console.log('Request payload:', { voice: voiceId, textLength: text.length });
-    
     // Fetch from API
     const response = await fetch(apiEndpoint, {
       method: 'POST',
@@ -230,8 +177,6 @@ export function useVoiceDemo({ apiEndpoint, scripts }: UseVoiceDemoOptions): Use
       },
       body: JSON.stringify({ voice: voiceId, text }),
     });
-    
-    console.log('API response status:', response.status, response.statusText);
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -249,7 +194,6 @@ export function useVoiceDemo({ apiEndpoint, scripts }: UseVoiceDemoOptions): Use
       throw new Error(errorMessage);
     }
 
-    console.log('Reading response as blob...');
     const blob = await response.blob();
     
     // Vérifier que c'est bien un fichier audio
@@ -278,13 +222,11 @@ export function useVoiceDemo({ apiEndpoint, scripts }: UseVoiceDemoOptions): Use
       setState('loading');
       setError(null);
 
-      // Initialize audio (only once, safe to call multiple times)
-      await initializeAudio();
+      // Setup audio analyser
+      await setupAudioAnalyser();
 
-      // Fetch audio from API
-      console.log('Fetching audio for voice:', voiceId);
+      // Fetch audio
       const audioUrl = await fetchAudio(voiceId);
-      console.log('Audio URL received:', audioUrl);
 
       // Set audio source and play
       audioRef.current.src = audioUrl;
@@ -361,7 +303,7 @@ export function useVoiceDemo({ apiEndpoint, scripts }: UseVoiceDemoOptions): Use
       setError(errorMessage);
       setState('error');
     }
-  }, [fetchAudio, initializeAudio]);
+  }, [fetchAudio, setupAudioAnalyser]);
 
   // Stop audio
   const stopAudio = useCallback(() => {
@@ -405,9 +347,7 @@ export function useVoiceDemo({ apiEndpoint, scripts }: UseVoiceDemoOptions): Use
     selectVoice,
     playAudio,
     stopAudio,
-    initializeAudio,
     canvasRef,
     audioRef,
   };
 }
-
