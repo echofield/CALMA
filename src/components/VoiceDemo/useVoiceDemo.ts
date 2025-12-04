@@ -266,8 +266,9 @@ export function useVoiceDemo({ apiEndpoint, scripts }: UseVoiceDemoOptions): Use
       audioRef.current.onended = () => {
         setState('idle');
       };
-      audioRef.current.onerror = (e) => {
-        const error = (e.target as HTMLAudioElement).error;
+      audioRef.current.onerror = (e: Event) => {
+        const audioElement = e.target as HTMLAudioElement;
+        const error = audioElement?.error;
         const errorMsg = error 
           ? `Erreur audio (code ${error.code}): ${error.message}`
           : 'Erreur de lecture audio';
