@@ -249,7 +249,8 @@ export function useVoiceDemo({ apiEndpoint, scripts }: UseVoiceDemoOptions): Use
         const handleError = (e: Event) => {
           audio.removeEventListener('canplay', handleCanPlay);
           audio.removeEventListener('error', handleError);
-          const error = (e.target as HTMLAudioElement).error;
+          const audioElement = e.currentTarget as HTMLAudioElement;
+          const error = audioElement?.error;
           reject(new Error(`Erreur audio: ${error?.code} - ${error?.message || 'Unknown error'}`));
         };
         
@@ -267,7 +268,7 @@ export function useVoiceDemo({ apiEndpoint, scripts }: UseVoiceDemoOptions): Use
         setState('idle');
       };
       audioRef.current.onerror = (e: Event) => {
-        const audioElement = e.target as HTMLAudioElement;
+        const audioElement = e.currentTarget as HTMLAudioElement;
         const error = audioElement?.error;
         const errorMsg = error 
           ? `Erreur audio (code ${error.code}): ${error.message}`
