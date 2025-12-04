@@ -61,11 +61,20 @@ export function useVoiceDemo({ apiEndpoint, scripts }: UseVoiceDemoOptions): Use
       }
 
       // Connect audio element to analyser
+      // Note: createMediaElementSource can only be called once per audio element
       if (!sourceNodeRef.current && audioRef.current) {
-        const source = ctx.createMediaElementSource(audioRef.current);
-        sourceNodeRef.current = source;
-        source.connect(analyser!);
-        analyser!.connect(ctx.destination);
+        try {
+          const source = ctx.createMediaElementSource(audioRef.current);
+          sourceNodeRef.current = source;
+          source.connect(analyser!);
+          analyser!.connect(ctx.destination);
+        } catch (err) {
+          // Si l'audio source existe déjà, on peut juste connecter l'analyser
+          console.warn('Audio source already exists, reusing:', err);
+          if (analyser) {
+            analyser.connect(ctx.destination);
+          }
+        }
       }
     } catch (err) {
       console.error('Error setting up audio analyser:', err);
