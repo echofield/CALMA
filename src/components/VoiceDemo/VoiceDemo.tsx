@@ -291,12 +291,54 @@ export function VoiceDemo({ open, onOpenChange }: VoiceDemoProps) {
         </div>
 
         {/* Canvas Visualization */}
-        <div style={{ height: '64px', marginBottom: '16px' }}>
-          <canvas
-            ref={canvasRef}
-            style={{ width: '100%', height: '100%' }}
-            aria-label="Visualisation audio"
-          />
+        <div style={{ marginBottom: '16px' }}>
+          {state === 'playing' && (
+            <div style={{
+              textAlign: 'center',
+              marginBottom: '12px',
+              padding: '8px 16px',
+              backgroundColor: '#FFFFFF',
+              borderRadius: '8px',
+              border: '1px solid #E0E0E0',
+              display: 'inline-block',
+              width: '100%',
+            }}>
+              <p style={{
+                fontSize: '0.9rem',
+                color: '#BFA97A',
+                fontFamily: 'Montserrat, sans-serif',
+                fontWeight: 500,
+                margin: 0,
+              }}>
+                Lecture en cours...
+              </p>
+            </div>
+          )}
+          <div style={{ 
+            height: '80px', 
+            backgroundColor: '#F5EEDF',
+            borderRadius: '12px',
+            padding: '12px',
+            border: '1px solid #E0E0E0'
+          }}>
+            <canvas
+              ref={canvasRef}
+              style={{ width: '100%', height: '100%', display: 'block' }}
+              aria-label="Visualisation audio"
+            />
+          </div>
+          {state === 'playing' && (
+            <p style={{
+              textAlign: 'center',
+              marginTop: '8px',
+              fontSize: '0.85rem',
+              color: '#1A1A1A',
+              fontFamily: 'Montserrat, sans-serif',
+              fontWeight: 400,
+            }}>
+              CALMA parle...
+            </p>
+          )}
         </div>
 
         {/* Status */}

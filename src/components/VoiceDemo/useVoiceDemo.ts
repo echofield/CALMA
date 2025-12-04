@@ -107,17 +107,51 @@ export function useVoiceDemo({ apiEndpoint, scripts }: UseVoiceDemoOptions): Use
     // Clear canvas using actual pixel dimensions
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    const barWidth = (WIDTH / (dataArray.length / 2)) * 1.5;
-    let x = 0;
+    const barCount = Math.min(dataArray.length / 2, 60); // Limit to 60 bars for better performance
+    const barWidth = (WIDTH / barCount) * 0.6; // 60% width, 40% spacing
+    const spacing = (WIDTH / barCount) * 0.4;
+    let x = spacing / 2;
 
-    for (let i = 0; i < dataArray.length / 2; i++) {
-      const barHeight = (dataArray[i] / 255) * HEIGHT * 0.8; // Scale to 80% of height
-      const opacity = Math.min(barHeight / (HEIGHT * 0.4), 1);
+    // Helper function to draw rounded rectangle
+    const drawRoundedRect = (x: number, y: number, width: number, height: number, radius: number) => {
+      ctx.beginPath();
+      ctx.moveTo(x + radius, y);
+      ctx.lineTo(x + width - radius, y);
+      ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+      ctx.lineTo(x + width, y + height - radius);
+      ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+      ctx.lineTo(x + radius, y + height);
+      ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+      ctx.lineTo(x, y + radius);
+      ctx.quadraticCurveTo(x, y, x + radius, y);
+      ctx.closePath();
+    };
+
+    for (let i = 0; i < barCount; i++) {
+      const dataIndex = Math.floor((i / barCount) * (dataArray.length / 2));
+      const barHeight = (dataArray[dataIndex] / 255) * HEIGHT * 0.9; // Scale to 90% of height
+      const minHeight = HEIGHT * 0.05; // Minimum bar height for visibility
+      const finalHeight = Math.max(barHeight, minHeight);
       
-      ctx.fillStyle = `rgba(191, 169, 122, ${opacity})`;
-      // Use CSS dimensions since context is already scaled
-      ctx.fillRect(x, HEIGHT / 2 - barHeight / 2, barWidth, barHeight);
-      x += barWidth + 1;
+      // Calculate position (centered vertically)
+      const y = (HEIGHT - finalHeight) / 2;
+      const radius = Math.min(barWidth / 2, 4); // Rounded corners
+      
+      // Create gradient for 3D effect
+      const gradient = ctx.createLinearGradient(x, y, x + barWidth, y + finalHeight);
+      const baseColor = { r: 191, g: 169, b: 122 }; // CALMA beige
+      const intensity = dataArray[dataIndex] / 255;
+      
+      // Light gradient (lighter at top, darker at bottom)
+      gradient.addColorStop(0, `rgba(${baseColor.r + 30}, ${baseColor.g + 30}, ${baseColor.b + 30}, ${intensity * 0.9})`);
+      gradient.addColorStop(0.5, `rgba(${baseColor.r}, ${baseColor.g}, ${baseColor.b}, ${intensity * 0.8})`);
+      gradient.addColorStop(1, `rgba(${baseColor.r - 20}, ${baseColor.g - 20}, ${baseColor.b - 20}, ${intensity * 0.7})`);
+      
+      ctx.fillStyle = gradient;
+      drawRoundedRect(x, y, barWidth, finalHeight, radius);
+      ctx.fill();
+      
+      x += barWidth + spacing;
     }
 
     animationFrameIdRef.current = requestAnimationFrame(drawVisualization);
