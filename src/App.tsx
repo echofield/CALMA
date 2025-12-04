@@ -298,7 +298,10 @@ export default function App() {
               </div>
               
               <motion.button
-                onClick={() => setVoiceDemoOpen(true)}
+                onClick={() => {
+                  console.log('Button clicked, opening VoiceDemo');
+                  setVoiceDemoOpen(true);
+                }}
                 className={`mt-auto w-full px-6 py-3 rounded-lg border-2 transition-all duration-300 group flex items-center justify-center gap-2 font-montserrat ${
                   activeTool === 'voice'
                     ? 'bg-[#BFA97A] border-[#BFA97A] text-white'

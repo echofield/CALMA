@@ -42,6 +42,13 @@ export function VoiceDemo({ open, onOpenChange }: VoiceDemoProps) {
     scripts: VOICE_DEMO_CONFIG.scripts,
   });
 
+  // Debug: log when modal opens/closes
+  useEffect(() => {
+    if (open) {
+      console.log('VoiceDemo modal opened');
+    }
+  }, [open]);
+
   // Initialize canvas on mount and handle resize
   useEffect(() => {
     const updateCanvasSize = () => {
