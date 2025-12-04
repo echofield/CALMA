@@ -1,13 +1,5 @@
 import { useEffect } from 'react';
-import { Play, Pause, Loader2, AlertCircle } from 'lucide-react';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '../ui/dialog';
-import { Button } from '../ui/button';
+import { Play, Pause, Loader2, AlertCircle, X } from 'lucide-react';
 import { useVoiceDemo } from './useVoiceDemo';
 
 const VOICE_DEMO_CONFIG = {
@@ -42,13 +34,6 @@ export function VoiceDemo({ open, onOpenChange }: VoiceDemoProps) {
     scripts: VOICE_DEMO_CONFIG.scripts,
   });
 
-  // Debug: log when modal opens/closes
-  useEffect(() => {
-    if (open) {
-      console.log('VoiceDemo modal opened');
-    }
-  }, [open]);
-
   // Initialize canvas on mount and handle resize
   useEffect(() => {
     const updateCanvasSize = () => {
@@ -77,7 +62,9 @@ export function VoiceDemo({ open, onOpenChange }: VoiceDemoProps) {
       }
     };
 
-    updateCanvasSize();
+    if (open) {
+      updateCanvasSize();
+    }
     
     const handleResize = () => {
       updateCanvasSize();
@@ -85,7 +72,20 @@ export function VoiceDemo({ open, onOpenChange }: VoiceDemoProps) {
 
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, [canvasRef, open]); // Re-run when modal opens
+  }, [canvasRef, open]);
+
+  // Prevent body scroll when modal is open
+  useEffect(() => {
+    if (open) {
+      document.body.style.overflow = 'hidden';
+      console.log('VoiceDemo modal opened');
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [open]);
 
   const handlePlayPause = () => {
     if (state === 'playing') {
@@ -97,16 +97,11 @@ export function VoiceDemo({ open, onOpenChange }: VoiceDemoProps) {
 
   const getStatusText = () => {
     switch (state) {
-      case 'idle':
-        return 'Prêt pour la démonstration';
-      case 'loading':
-        return 'Génération de la voix...';
-      case 'playing':
-        return 'CALMA Voice parle...';
-      case 'error':
-        return error || 'Erreur';
-      default:
-        return '';
+      case 'idle': return 'Prêt pour la démonstration';
+      case 'loading': return 'Génération de la voix...';
+      case 'playing': return 'CALMA Voice parle...';
+      case 'error': return error || 'Erreur';
+      default: return '';
     }
   };
 
@@ -114,118 +109,233 @@ export function VoiceDemo({ open, onOpenChange }: VoiceDemoProps) {
     (v) => v.id === selectedVoice
   );
 
+  if (!open) return null;
+
   return (
     <>
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent 
-          className="sm:max-w-2xl !bg-white border border-[#E0E0E0] shadow-xl"
-          style={{ backgroundColor: '#FFFFFF' }}
+      {/* Overlay */}
+      <div
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.6)',
+          zIndex: 9998,
+        }}
+        onClick={() => onOpenChange(false)}
+      />
+
+      {/* Modal */}
+      <div
+        style={{
+          position: 'fixed',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          backgroundColor: '#FFFFFF',
+          borderRadius: '16px',
+          padding: '32px',
+          width: '90%',
+          maxWidth: '600px',
+          maxHeight: '90vh',
+          overflowY: 'auto',
+          zIndex: 9999,
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+          border: '1px solid #E0E0E0',
+        }}
+      >
+        {/* Close button */}
+        <button
+          onClick={() => onOpenChange(false)}
+          style={{
+            position: 'absolute',
+            top: '16px',
+            right: '16px',
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            padding: '8px',
+            borderRadius: '8px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+          aria-label="Fermer la modal"
         >
-          <DialogHeader>
-            <DialogTitle className="text-[#1A1A1A] font-montserrat text-2xl">
-              Découvrez CALMA Voice
-            </DialogTitle>
-            <DialogDescription className="text-[#6B6B6B] font-montserrat">
-              Écoutez nos voix et découvrez comment CALMA accueille vos clients avec élégance.
-            </DialogDescription>
-          </DialogHeader>
+          <X style={{ width: '20px', height: '20px', color: '#6B6B6B' }} />
+        </button>
 
-          <div className="space-y-6 mt-4">
-            {/* Voice Selector */}
-            <div>
-              <label className="text-xs text-[#6B6B6B] mb-2 block font-montserrat">
-                Choisissez une voix
-              </label>
-              <div className="flex gap-2 p-1 bg-[#EFF0ED] rounded-full border border-[#E0E0E0]">
-                {Object.values(VOICE_DEMO_CONFIG.voices).map((voice) => {
-                  const isSelected = selectedVoice === voice.id;
-                  return (
-                    <button
-                      key={voice.id}
-                      onClick={() => selectVoice(voice.id)}
-                      disabled={state === 'playing' || state === 'loading'}
-                      className={`flex-1 px-4 py-2 rounded-full transition-all duration-300 font-montserrat text-sm ${
-                        isSelected
-                          ? 'bg-[#BFA97A] text-white shadow-sm'
-                          : 'bg-transparent text-[#6B6B6B] hover:text-[#1A1A1A]'
-                      } disabled:opacity-50 disabled:cursor-not-allowed`}
-                      aria-label={`Sélectionner la voix ${voice.label}`}
-                    >
-                      {voice.label}
-                    </button>
-                  );
-                })}
-              </div>
-              {selectedVoiceConfig && (
-                <p className="text-xs text-[#6B6B6B] mt-2 font-montserrat italic">
-                  {selectedVoiceConfig.description}
-                </p>
-              )}
-            </div>
+        {/* Header */}
+        <div style={{ marginBottom: '24px' }}>
+          <h2 style={{ 
+            color: '#1A1A1A', 
+            fontSize: '1.5rem', 
+            fontWeight: 500,
+            fontFamily: 'Montserrat, sans-serif',
+            marginBottom: '8px',
+          }}>
+            Découvrez CALMA Voice
+          </h2>
+          <p style={{ 
+            color: '#6B6B6B', 
+            fontSize: '0.95rem',
+            fontFamily: 'Montserrat, sans-serif',
+          }}>
+            Écoutez nos voix et découvrez comment CALMA accueille vos clients.
+          </p>
+        </div>
 
-            {/* Play/Stop Button */}
-            <div className="flex justify-center">
-              <Button
-                onClick={handlePlayPause}
-                disabled={state === 'loading'}
-                className="bg-[#BFA97A] hover:bg-[#BFA97A]/90 text-white px-8 py-6 rounded-lg transition-all duration-300 font-montserrat disabled:opacity-50 disabled:cursor-not-allowed"
-                style={{ letterSpacing: '0.08em', fontWeight: 500 }}
-                aria-label={state === 'playing' ? 'Arrêter la lecture' : 'Lancer la lecture'}
-              >
-                {state === 'loading' ? (
-                  <>
-                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                    Génération...
-                  </>
-                ) : state === 'playing' ? (
-                  <>
-                    <Pause className="w-5 h-5 mr-2" />
-                    Arrêter
-                  </>
-                ) : (
-                  <>
-                    <Play className="w-5 h-5 mr-2" />
-                    Lancer la démo
-                  </>
-                )}
-              </Button>
-            </div>
-
-            {/* Audio Visualization Canvas */}
-            <div className="h-16 flex items-center justify-center">
-              <canvas
-                ref={canvasRef}
-                className="w-full h-full"
-                style={{ maxHeight: '64px' }}
-                aria-label="Visualisation audio"
-              />
-            </div>
-
-            {/* Status Display */}
-            <div className="h-6 flex items-center justify-center">
-              {error && state === 'error' ? (
-                <div className="flex flex-col items-center gap-1 text-[#d4183d] text-sm font-montserrat max-w-md text-center">
-                  <div className="flex items-center gap-2">
-                    <AlertCircle className="w-4 h-4" />
-                    <span>{error}</span>
-                  </div>
-                  <p className="text-xs text-[#6B6B6B] mt-1">
-                    Endpoint: {VOICE_DEMO_CONFIG.apiEndpoint}
-                  </p>
-                </div>
-              ) : (
-                <p className="text-xs text-[#6B6B6B] font-montserrat">
-                  {getStatusText()}
-                </p>
-              )}
-            </div>
+        {/* Voice Selector */}
+        <div style={{ marginBottom: '24px' }}>
+          <label style={{ 
+            display: 'block',
+            fontSize: '0.75rem', 
+            color: '#6B6B6B', 
+            marginBottom: '8px',
+            fontFamily: 'Montserrat, sans-serif',
+          }}>
+            Choisissez une voix
+          </label>
+          <div style={{
+            display: 'flex',
+            gap: '8px',
+            padding: '4px',
+            backgroundColor: '#EFF0ED',
+            borderRadius: '999px',
+            border: '1px solid #E0E0E0',
+          }}>
+            {Object.values(VOICE_DEMO_CONFIG.voices).map((voice) => {
+              const isSelected = selectedVoice === voice.id;
+              return (
+                <button
+                  key={voice.id}
+                  onClick={() => selectVoice(voice.id)}
+                  disabled={state === 'playing' || state === 'loading'}
+                  style={{
+                    flex: 1,
+                    padding: '10px 16px',
+                    borderRadius: '999px',
+                    border: 'none',
+                    cursor: state === 'playing' || state === 'loading' ? 'not-allowed' : 'pointer',
+                    fontFamily: 'Montserrat, sans-serif',
+                    fontSize: '0.9rem',
+                    fontWeight: 500,
+                    transition: 'all 0.3s ease',
+                    backgroundColor: isSelected ? '#BFA97A' : 'transparent',
+                    color: isSelected ? '#FFFFFF' : '#6B6B6B',
+                    opacity: state === 'playing' || state === 'loading' ? 0.5 : 1,
+                  }}
+                  aria-label={`Sélectionner la voix ${voice.label}`}
+                >
+                  {voice.label}
+                </button>
+              );
+            })}
           </div>
-        </DialogContent>
-      </Dialog>
+          {selectedVoiceConfig && (
+            <p style={{ 
+              fontSize: '0.75rem', 
+              color: '#6B6B6B', 
+              marginTop: '8px',
+              fontStyle: 'italic',
+              fontFamily: 'Montserrat, sans-serif',
+            }}>
+              {selectedVoiceConfig.description}
+            </p>
+          )}
+        </div>
 
-      {/* Hidden audio element */}
-      <audio ref={audioRef} className="hidden" />
+        {/* Play Button */}
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '24px' }}>
+          <button
+            onClick={handlePlayPause}
+            disabled={state === 'loading'}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '14px 32px',
+              backgroundColor: '#BFA97A',
+              color: '#FFFFFF',
+              border: 'none',
+              borderRadius: '12px',
+              cursor: state === 'loading' ? 'not-allowed' : 'pointer',
+              fontFamily: 'Montserrat, sans-serif',
+              fontSize: '0.95rem',
+              fontWeight: 500,
+              letterSpacing: '0.05em',
+              opacity: state === 'loading' ? 0.7 : 1,
+              transition: 'all 0.3s ease',
+            }}
+            aria-label={state === 'playing' ? 'Arrêter la lecture' : 'Lancer la lecture'}
+          >
+            {state === 'loading' ? (
+              <>
+                <Loader2 style={{ width: '20px', height: '20px', animation: 'spin 1s linear infinite' }} />
+                Génération...
+              </>
+            ) : state === 'playing' ? (
+              <>
+                <Pause style={{ width: '20px', height: '20px' }} />
+                Arrêter
+              </>
+            ) : (
+              <>
+                <Play style={{ width: '20px', height: '20px' }} />
+                Lancer la démo
+              </>
+            )}
+          </button>
+        </div>
+
+        {/* Canvas Visualization */}
+        <div style={{ height: '64px', marginBottom: '16px' }}>
+          <canvas
+            ref={canvasRef}
+            style={{ width: '100%', height: '100%' }}
+            aria-label="Visualisation audio"
+          />
+        </div>
+
+        {/* Status */}
+        <div style={{ textAlign: 'center' }}>
+          {error && state === 'error' ? (
+            <div style={{ 
+              color: '#d4183d', 
+              fontSize: '0.85rem', 
+              fontFamily: 'Montserrat, sans-serif',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+            }}>
+              <AlertCircle style={{ width: '16px', height: '16px' }} />
+              <span>{error}</span>
+            </div>
+          ) : (
+            <p style={{ 
+              fontSize: '0.75rem', 
+              color: '#6B6B6B',
+              fontFamily: 'Montserrat, sans-serif',
+            }}>
+              {getStatusText()}
+            </p>
+          )}
+        </div>
+      </div>
+
+      {/* Hidden audio */}
+      <audio ref={audioRef} style={{ display: 'none' }} />
+
+      {/* Keyframe for spinner */}
+      <style>{`
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
     </>
   );
 }
-
