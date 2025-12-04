@@ -27,6 +27,7 @@ export function VoiceDemo({ open, onOpenChange }: VoiceDemoProps) {
     selectVoice,
     playAudio,
     stopAudio,
+    initializeAudio,
     canvasRef,
     audioRef,
   } = useVoiceDemo({
@@ -74,18 +75,22 @@ export function VoiceDemo({ open, onOpenChange }: VoiceDemoProps) {
     return () => window.removeEventListener('resize', handleResize);
   }, [canvasRef, open]);
 
-  // Prevent body scroll when modal is open
+  // Initialize audio when modal opens
   useEffect(() => {
     if (open) {
       document.body.style.overflow = 'hidden';
       console.log('VoiceDemo modal opened');
+      // Initialize audio system once when modal opens
+      initializeAudio().catch((err) => {
+        console.error('Failed to initialize audio:', err);
+      });
     } else {
       document.body.style.overflow = '';
     }
     return () => {
       document.body.style.overflow = '';
     };
-  }, [open]);
+  }, [open, initializeAudio]);
 
   const handlePlayPause = () => {
     if (state === 'playing') {
