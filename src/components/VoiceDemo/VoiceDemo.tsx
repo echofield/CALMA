@@ -117,7 +117,10 @@ export function VoiceDemo({ open, onOpenChange }: VoiceDemoProps) {
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-2xl bg-white border border-[#E0E0E0]">
+        <DialogContent 
+          className="sm:max-w-2xl border border-[#E0E0E0] shadow-xl"
+          style={{ backgroundColor: '#FFFFFF' }}
+        >
           <DialogHeader>
             <DialogTitle className="text-[#1A1A1A] font-montserrat text-2xl">
               Découvrez CALMA Voice
