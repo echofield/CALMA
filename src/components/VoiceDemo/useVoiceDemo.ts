@@ -176,24 +176,39 @@ export function useVoiceDemo({ apiEndpoint, scripts }: UseVoiceDemoOptions): Use
     }
 
     // Fetch from API
+    console.log('Fetching audio from:', apiEndpoint, { voice: voiceId, textLength: text.length });
+    
     const response = await fetch(apiEndpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Accept': 'audio/mpeg, application/octet-stream, */*',
       },
       body: JSON.stringify({ voice: voiceId, text }),
+      // Ajouter credentials pour les requêtes cross-origin si nécessaire
+      credentials: 'omit',
     });
+
+    console.log('API Response status:', response.status, response.statusText);
 
     if (!response.ok) {
       const errorText = await response.text();
       let errorMessage = `Erreur API (${response.status}): ${response.statusText}`;
       
+      // Gestion spécifique de l'erreur 401
+      if (response.status === 401) {
+        errorMessage = 'Erreur d\'authentification. Le service TTS nécessite une configuration serveur. Veuillez contacter le support.';
+        console.error('401 Unauthorized - Le serveur nécessite une authentification ou la configuration API est manquante');
+      }
+      
       try {
         const errorJson = JSON.parse(errorText);
         errorMessage = errorJson.error || errorJson.details || errorMessage;
+        console.error('API Error JSON:', errorJson);
       } catch {
         if (errorText) {
           errorMessage += ` - ${errorText}`;
+          console.error('API Error text:', errorText);
         }
       }
       
@@ -329,8 +344,12 @@ export function useVoiceDemo({ apiEndpoint, scripts }: UseVoiceDemoOptions): Use
       if (err instanceof Error) {
         errorMessage = err.message;
         // Messages d'erreur plus clairs
-        if (err.message.includes('Failed to fetch') || err.message.includes('NetworkError')) {
+        if (err.message.includes('401') || err.message.includes('Unauthorized') || err.message.includes('authentification')) {
+          errorMessage = 'Le service TTS nécessite une configuration serveur. Le backend n\'est pas correctement configuré. Veuillez contacter le support technique.';
+        } else if (err.message.includes('Failed to fetch') || err.message.includes('NetworkError')) {
           errorMessage = 'Impossible de contacter le serveur. Vérifiez votre connexion ou que le service Render est actif.';
+        } else if (err.message.includes('TTS_FAILED')) {
+          errorMessage = 'La génération vocale a échoué. Le service backend n\'est pas disponible ou mal configuré.';
         } else if (err.message.includes('404')) {
           errorMessage = 'Endpoint non trouvé. Vérifiez l\'URL du serveur.';
         } else if (err.message.includes('500')) {
