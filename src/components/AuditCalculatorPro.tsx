@@ -61,7 +61,7 @@ export function AuditCalculatorPro() {
 
   return (
     <motion.div 
-      className="bg-[#F7F4EC] border border-[#6C2E2F]/30 rounded-xl p-8 md:p-12 max-w-6xl mx-auto"
+      className="bg-[#F7F4EC] border border-[#6C2E2F]/30 rounded-xl p-6 md:p-8 lg:p-12 max-w-6xl mx-auto w-full"
       style={{ boxShadow: '0 4px 20px rgba(0, 0, 0, 0.02)' }}
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}

@@ -240,27 +240,31 @@ export function useVoiceDemo({ apiEndpoint, scripts }: UseVoiceDemoOptions): Use
       }
 
       // Fetch audio
+      console.log('Fetching audio for voice:', voiceId);
       const audioUrl = await fetchAudio(voiceId);
+      console.log('Audio URL received:', audioUrl);
+
+      if (!audioRef.current) {
+        throw new Error('Audio element not available');
+      }
+
+      const audio = audioRef.current;
 
       // Set audio source and play
-      audioRef.current.src = audioUrl;
+      console.log('Setting audio source:', audioUrl);
+      audio.src = audioUrl;
       
       // Attendre que l'audio soit chargé
       await new Promise((resolve, reject) => {
-        if (!audioRef.current) {
-          reject(new Error('Audio element not available'));
-          return;
-        }
-        
-        const audio = audioRef.current;
-        
         const handleCanPlay = () => {
+          console.log('Audio can play, readyState:', audio.readyState);
           audio.removeEventListener('canplay', handleCanPlay);
           audio.removeEventListener('error', handleError);
           resolve(undefined);
         };
         
         const handleError = (e: Event) => {
+          console.error('Audio load error:', e);
           audio.removeEventListener('canplay', handleCanPlay);
           audio.removeEventListener('error', handleError);
           const audioElement = e.currentTarget as HTMLAudioElement;
@@ -270,18 +274,24 @@ export function useVoiceDemo({ apiEndpoint, scripts }: UseVoiceDemoOptions): Use
         
         if (audio.readyState >= 2) {
           // Already loaded
+          console.log('Audio already loaded, readyState:', audio.readyState);
           resolve(undefined);
         } else {
           audio.addEventListener('canplay', handleCanPlay);
           audio.addEventListener('error', handleError);
+          console.log('Loading audio...');
           audio.load();
         }
       });
       
-      audioRef.current.onended = () => {
+      // Setup event handlers
+      audio.onended = () => {
+        console.log('Audio ended');
         setState('idle');
       };
-      audioRef.current.onerror = (e: string | Event) => {
+      
+      audio.onerror = (e: string | Event) => {
+        console.error('Audio playback error:', e);
         let errorMsg = 'Erreur de lecture audio';
         
         if (typeof e !== 'string' && e.currentTarget) {
@@ -296,8 +306,22 @@ export function useVoiceDemo({ apiEndpoint, scripts }: UseVoiceDemoOptions): Use
         setState('error');
       };
 
-      await audioRef.current.play();
-      setState('playing');
+      // Play audio
+      console.log('Attempting to play audio...');
+      try {
+        await audio.play();
+        console.log('Audio playing successfully');
+        setState('playing');
+      } catch (playError: any) {
+        console.error('Play failed:', playError);
+        // Si play() échoue, c'est souvent à cause d'une politique de navigateur
+        // (nécessite interaction utilisateur). On essaie quand même de mettre l'état à playing
+        // car l'utilisateur a cliqué sur le bouton
+        if (playError.name === 'NotAllowedError') {
+          throw new Error('La lecture nécessite une interaction. Veuillez cliquer à nouveau.');
+        }
+        throw playError;
+      }
     } catch (err) {
       console.error('Error playing audio:', err);
       let errorMessage = 'Erreur de lecture';

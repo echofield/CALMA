@@ -457,13 +457,6 @@ export default function App() {
         </div>
       </section>
 
-      {/* SECTION 3 — AUDIT INTERACTIF */}
-      <section id="audit" className="px-6 py-32 bg-gradient-to-b from-[#F5EEDF] to-white">
-        <div className="mx-auto max-w-7xl">
-          <AuditCalculatorPro />
-        </div>
-      </section>
-
       {/* SECTION 5 — HYPERPERSONNALISATION */}
       <section className="px-6 py-[100px] bg-[#EFF0ED]">
         <div className="mx-auto max-w-[1080px]">

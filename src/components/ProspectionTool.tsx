@@ -1,11 +1,52 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { Target, MapPin, Users, TrendingUp, ArrowRight, Eye } from 'lucide-react';
+import { MapContainer, TileLayer, Circle, Marker, useMap } from 'react-leaflet';
+import { TrendingUp, ArrowRight, Eye } from 'lucide-react';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+
+// Fix pour les icônes Leaflet par défaut
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+});
+
+// Composant pour ajuster la vue de la carte quand le radius change
+function MapUpdater({ center, radius }: { center: [number, number]; radius: number }) {
+  const map = useMap();
+  
+  useEffect(() => {
+    // Ajuster le zoom pour que le cercle soit visible
+    const meters = radius * 1000;
+    const bounds = L.latLng(center).toBounds(meters);
+    map.fitBounds(bounds, { padding: [50, 50] });
+  }, [map, center, radius]);
+
+  return null;
+}
 
 export function ProspectionTool() {
   const [range, setRange] = useState(10);
   const [targetType, setTargetType] = useState('entreprises');
   const [hasInteracted, setHasInteracted] = useState(false);
+  const [mapCenter, setMapCenter] = useState<[number, number]>([48.8566, 2.3522]); // Paris par défaut
+
+  // Géolocalisation au chargement
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setMapCenter([position.coords.latitude, position.coords.longitude]);
+        },
+        () => {
+          // Si la géolocalisation échoue, on garde Paris
+          console.log('Géolocalisation non disponible, utilisation de Paris par défaut');
+        }
+      );
+    }
+  }, []);
 
   // Estimation basée sur les paramètres (calcul interne, jamais affiché exactement)
   const calculateProspects = () => {
@@ -25,12 +66,12 @@ export function ProspectionTool() {
     return "Potentiel majeur";
   };
 
-  // Détecter l'interaction avec le slider ou la sélection
+  // Détecter l'interaction avec le slider
   useEffect(() => {
-    if (range !== 10 || targetType !== 'entreprises') {
+    if (range !== 10) {
       setHasInteracted(true);
     }
-  }, [range, targetType]);
+  }, [range]);
 
   // Scroll vers le formulaire de contact
   const scrollToContact = () => {
@@ -46,20 +87,17 @@ export function ProspectionTool() {
     }
   };
 
-  const targetTypes = [
-    { value: 'entreprises', label: 'Entreprises & Corporate', icon: Users },
-    { value: 'agences', label: 'Agences événementielles', icon: Target },
-    { value: 'coworkings', label: 'Coworkings & Espaces', icon: MapPin }
-  ];
+  // Convertir km en mètres pour Leaflet
+  const radiusInMeters = range * 1000;
 
   return (
     <motion.div
-      className="bg-gradient-to-br from-white to-[#EFF0ED] rounded-xl p-10 md:p-16 shadow-lg border border-[#E0E0E0]"
+      className="bg-gradient-to-br from-white to-[#EFF0ED] rounded-xl p-6 md:p-10 lg:p-16 shadow-lg border border-[#E0E0E0]"
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
     >
-      <div className="max-w-3xl mx-auto space-y-10">
+      <div className="max-w-5xl mx-auto space-y-8">
         {/* Header */}
         <div className="text-center space-y-4">
           <motion.div
@@ -75,17 +113,44 @@ export function ProspectionTool() {
             Découvrez votre potentiel B2B immédiat
           </h3>
           <p className="text-[#6B6B6B] font-montserrat max-w-2xl mx-auto" style={{ fontSize: '1.05rem', lineHeight: '1.7', fontWeight: 300 }}>
-            Choisissez votre zone et votre cible : nous identifions instantanément les opportunités près de vous.
+            Explorez votre zone de prospection sur la carte et découvrez les opportunités autour de vous.
           </p>
         </div>
 
+        {/* Carte Leaflet */}
+        <div className="relative rounded-xl overflow-hidden border border-[#E0E0E0] shadow-md" style={{ height: '400px' }}>
+          <MapContainer
+            center={mapCenter}
+            zoom={12}
+            style={{ height: '100%', width: '100%', zIndex: 1 }}
+            scrollWheelZoom={true}
+          >
+            <TileLayer
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            />
+            <MapUpdater center={mapCenter} radius={range} />
+            <Circle
+              center={mapCenter}
+              radius={radiusInMeters}
+              pathOptions={{
+                color: '#BFA97A',
+                fillColor: '#BFA97A',
+                fillOpacity: 0.2,
+                weight: 2,
+              }}
+            />
+            <Marker position={mapCenter} />
+          </MapContainer>
+        </div>
+
         {/* Controls */}
-        <div className="space-y-8">
+        <div className="space-y-6">
           {/* Range Slider */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <label className="text-[#1A1A1A] font-montserrat" style={{ fontSize: '1.1rem', fontWeight: 500 }}>
-                Zone de prospection
+                Périmètre de prospection
               </label>
               <span className="text-[#BFA97A] font-montserrat" style={{ fontSize: '1.5rem', fontWeight: 300 }}>
                 {range} km
@@ -110,38 +175,6 @@ export function ProspectionTool() {
               <span>30 km</span>
             </div>
           </div>
-
-          {/* Target Type Selection */}
-          <div className="space-y-4">
-            <label className="text-[#1A1A1A] font-montserrat block" style={{ fontSize: '1.1rem', fontWeight: 500 }}>
-              Type de cible
-            </label>
-            <div className="grid md:grid-cols-3 gap-4">
-              {targetTypes.map((type) => {
-                const Icon = type.icon;
-                return (
-                  <motion.button
-                    key={type.value}
-                    onClick={() => setTargetType(type.value)}
-                    className={`p-6 rounded-lg border-2 transition-all duration-300 ${
-                      targetType === type.value
-                        ? 'border-[#BFA97A] bg-[#BFA97A]/5'
-                        : 'border-[#E0E0E0] bg-white hover:border-[#BFA97A]/50'
-                    }`}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    <Icon className={`w-8 h-8 mx-auto mb-3 ${
-                      targetType === type.value ? 'text-[#BFA97A]' : 'text-[#6B6B6B]'
-                    }`} />
-                    <p className="text-[#232323] font-montserrat text-sm text-center" style={{ fontWeight: 400 }}>
-                      {type.label}
-                    </p>
-                  </motion.button>
-                );
-              })}
-            </div>
-          </div>
         </div>
 
         {/* Results - Teaser Version */}
@@ -160,7 +193,7 @@ export function ProspectionTool() {
             {!hasInteracted ? (
               <div className="space-y-2">
                 <p className="text-[#6B6B6B] font-montserrat text-lg" style={{ fontWeight: 300 }}>
-                  Sélectionnez votre zone pour estimer
+                  Ajustez le périmètre pour estimer
                 </p>
               </div>
             ) : (
@@ -242,6 +275,9 @@ export function ProspectionTool() {
         }
         .slider-thumb::-moz-range-thumb:hover {
           transform: scale(1.15);
+        }
+        .leaflet-container {
+          font-family: 'Montserrat', sans-serif;
         }
       `}</style>
     </motion.div>
